@@ -1,0 +1,46 @@
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TZ=UTC
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    tzdata \
+    curl \
+    ca-certificates \
+    gcc \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies first for better caching
+COPY requirements.txt ./requirements.txt
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
+
+# Copy application source
+COPY api /app/api
+COPY scanner /app/scanner
+COPY db /app/db
+COPY services /app/services
+COPY models /app/models
+COPY utils /app/utils
+
+# Prepare runtime directories and permissions
+RUN addgroup --system --gid 10001 appuser \
+    && adduser --system --uid 10001 --ingroup appuser --home /home/appuser appuser \
+    && mkdir -p /app/backups /app/database \
+    && chown -R appuser:appuser /app
+
+ARG VERSION=unknown
+ENV VERSION=$VERSION
+
+ENV PYTHONPATH=/app
+
+USER appuser
+
+EXPOSE 8000
+
+# Production command with multiple workers
+CMD ["uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers"]

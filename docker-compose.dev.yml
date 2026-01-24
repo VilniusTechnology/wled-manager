@@ -1,0 +1,131 @@
+# Docker Compose Development Configuration for WLED Manager
+# This file defines the development environment with hot reloading
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml logs -f
+#   docker-compose -f docker-compose.dev.yml down
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.dev
+    # Tag with 'dev' for development builds
+    image: ${REGISTRY:-localhost}/wled-manager-backend:dev
+
+    # Port mapping: host:container
+    ports:
+      - "8000:8000"
+
+    # Volume mounts for hot reloading
+    # Mount source code directories so changes are reflected immediately
+    volumes:
+      # Application modules
+      - ./api:/app/api
+      - ./scanner:/app/scanner
+      - ./database:/app/database
+      - ./db:/app/db
+      - ./models:/app/models
+      - ./services:/app/services
+      - ./utils:/app/utils
+
+      # Data persistence
+      - ./backups:/app/backups
+
+    # Environment variables
+    environment:
+      - PYTHONPATH=/app
+      - TIMEZONE=${TIMEZONE:-UTC}
+      - TZ=${TIMEZONE:-UTC}
+      - BACKUP_DIR=${BACKUP_DIR:-/app/backups}
+      - DATABASE_PATH=${DATABASE_PATH:-/app/database/wled_devices.db}
+      - SECRET=${SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+
+      # Feature flags / Process controls
+      - DISABLE_BACKUP_SCHEDULER=${DISABLE_BACKUP_SCHEDULER:-false}
+      - DISABLE_DEVICE_REFRESH_SCHEDULER=${DISABLE_DEVICE_REFRESH_SCHEDULER:-false}
+
+      # Development mode
+      - DEBUG=${DEBUG:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - VERSION=dev
+
+    # Override default command for development with hot reload
+    # --reload: Enable auto-reload on code changes
+    # --reload-dir: Directories to watch for changes
+    command: [ "uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/api", "--reload-dir", "/app/scanner", "--reload-dir", "/app/services", "--reload-dir", "/app/models", "--reload-dir", "/app/db", "--reload-dir", "/app/utils" ]
+
+    # Health check
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Networks
+    networks:
+      - wled-network
+
+  # Frontend UI Service
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile.dev
+    # Tag with 'dev' for development builds
+    image: ${REGISTRY:-localhost}/wled-manager-frontend:dev
+
+    # Port mapping: host:container
+    ports:
+      - "5173:5173"
+
+    # Volume mounts for hot reloading
+    volumes:
+      # Mount entire UI directory for hot reload
+      - ./ui:/app
+
+      # Use named volume for node_modules to avoid overwriting
+      # This prevents the host's node_modules from being used
+      - node_modules:/app/node_modules
+
+    # Environment variables
+    environment:
+      - NODE_ENV=development
+      - VITE_API_HOST=${VITE_API_HOST:-backend}
+      - VITE_API_PORT=${VITE_API_PORT:-8000}
+      - VITE_API_PROTOCOL=${VITE_API_PROTOCOL:-http}
+      - VITE_APP_VERSION=dev
+
+    # Wait for backend to be ready
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    # Override default command for development with hot reload
+    # --host 0.0.0.0: Allow external access
+    # --port 5173: Vite default dev server port
+    command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173" ]
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Networks
+    networks:
+      - wled-network
+
+# Named volumes
+volumes:
+  # Named volume for node_modules to avoid conflicts with host
+  node_modules:
+    driver: local
+
+# Networks
+networks:
+  wled-network:
+    driver: bridge

@@ -1,0 +1,92 @@
+# Production Docker Compose Configuration for WLED Manager
+# This file is for production deployment with persistent volumes
+#
+# Usage:
+#   docker-compose up -d
+#   docker-compose logs -f
+#   docker-compose down
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: ${REGISTRY:-localhost}/${API_REPO:-wled-manager-backend}:${VERSION:-latest}
+    container_name: ${API_REPO:-wled-manager-backend}
+    restart: unless-stopped
+    # ports:
+    #   - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
+    network_mode: host
+    volumes:
+      - ${DATA_PATH:-./backups}:/app/backups
+      - ${DATA_PATH:-./database}:/app/database
+      - ${DATA_PATH:-./db}:/app/db
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+      - PYTHONDONTWRITEBYTECODE=${PYTHONDONTWRITEBYTECODE:-1}
+      - TIMEZONE=${TIMEZONE:-UTC}
+      - TZ=${TIMEZONE:-UTC}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - BACKUP_DIR=${BACKUP_DIR:-/app/backups}
+      - DATABASE_PATH=${DATABASE_PATH:-/app/database/wled_devices.db}
+      - NETWORK_RANGE=${NETWORK_RANGE:-192.168.1.0/24}
+      - DISABLE_BACKUP_SCHEDULER=${DISABLE_BACKUP_SCHEDULER:-false}
+      - DISABLE_DEVICE_REFRESH_SCHEDULER=${DISABLE_DEVICE_REFRESH_SCHEDULER:-false}
+      - BACKEND_HOST=${BACKEND_HOST:-0.0.0.0}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - BACKEND_WORKERS=${BACKEND_WORKERS:-4}
+      - SECRET=${SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8000}/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # networks:
+    #   - wled-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_HOST=${VITE_API_HOST:-backend}
+        - VITE_API_PORT=${VITE_API_PORT:-8000}
+        - VITE_API_PROTOCOL=${VITE_API_PROTOCOL:-http}
+    image: ${REGISTRY:-localhost}/${UI_REPO:-wled-manager-frontend}:${VERSION:-latest}
+    container_name: ${UI_REPO:-wled-manager-frontend}
+    restart: unless-stopped
+    # ports:
+    #   - "80:8080"
+    network_mode: host
+    environment:
+      - TZ=${TIMEZONE:-UTC}
+      - NODE_ENV=${NODE_ENV:-production}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # networks:
+    #   - wled-network
+
+networks:
+  wled-network:
+    driver: bridge
+
+volumes:
+  backups:
+    driver: local
+  database:
+    driver: local
+  db:
+    driver: local

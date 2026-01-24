@@ -1,131 +1,112 @@
-# WLED Scanner
+# WLED Manager
 
-A Python script to scan for WLED devices on your local network and export their information.
+<p align="center">
+  <strong>A comprehensive management solution for WLED devices on your network</strong>
+</p>
 
-## Features
+<p align="center"> •
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#documentation">Documentation</a> •
+</p>
 
-- Automatically detects WLED devices on your local network
-- Retrieves detailed device information including:
-  - Device name and version
-  - LED strip configuration (count, power consumption)
-  - Current state (on/off, brightness, effects)
-  - Network information (IP, MAC, WiFi signal)
-  - Available effects and palettes count
-- Export results to JSON or CSV format
+This project was born out of necessity: managing the quantity and instability of WLED ESP-based devices. Device duplication issues (when a device changes IP) occurred with other WLED management software. Imperfect handling of WLED device uniqueness in Home Assistant's WLED integration (when devices change IP) forced me to implement communication and management using mDNS and MAC addresses.
 
-## Installation
+Most helpful and notable features:
+- Create/restore backups and configurations for easy device recovery.
+- Compare device configurations and backups.
+- Device identification using MAC addresses (so all artifacts are linked to the device even if IP or name changes).
 
-1. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-
-## Changing Backup Location
-
-By default, backups are saved in the `backups` directory. You can change the backup location by setting the `BACKUP_DIR` environment variable or by creating a `.env` file in the project root:
-
-### Using a .env file
-Create a file named `.env` in the project root with the following content:
-
-```
-BACKUP_DIR=/your/custom/backup/path
-```
-
-### Using an environment variable
-You can also set the environment variable directly in your shell:
-
-```bash
-export BACKUP_DIR=/your/custom/backup/path
-```
-
-The application will use this path for saving WLED device backups.
-
-## Usage
-
-
-## API Server
-
-You can launch the WLED Manager API (FastAPI) for programmatic access:
-
-### Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### Start the API server
-```bash
-uvicorn api.server:app --reload
-
-nvm use 22.18.0 && npm --prefix ui run dev
-```
-
-The API will be available at [http://127.0.0.1:8000](http://127.0.0.1:8000)
-
-Interactive docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Use cases:
+- Scan network for WLED devices.
+- Backup existing configurations.
+- Easily set up or change network/MQTT configurations by using secrets as passwords.
+- Configure from a fast UI by having device configurations side by side.
+- Compare configurations if one (or some) of the devices is "acting out" and others aren't.
+- Deployable in your homelab using Docker or K8s with mDNS support.
 
 ---
 
-### Basic scan (console output only)
+## Features
+
+- **🔍 Device Discovery** - Automatically detect WLED devices on your local network
+- **📡 mDNS Support** - Resolve devices by hostname even when IPs change (DHCP-friendly)
+- **📊 Dashboard** - Real-time overview of all your devices with status monitoring
+- **💾 Automated Backups** - Schedule automatic backups of device configurations
+- **🔄 Configuration Sync** - Compare and restore device configurations
+- **📧 Email Notifications** - Get notified when backups complete, with last known mDns and IP links to devices.
+- **📅 Schedulers Management** - Manage background tasks like backups and network scans
+- **🔐 Secrets Management** - Securely manage WiFi and MQTT credentials for your devices
+- **🎛️ Remote Control** - Toggle power, adjust brightness, and manage presets
+- **📜 Version History** - Track configuration changes over time
+- **🏥 Health Monitoring** - Automatic health checks for all devices
+- **☸️ Kubernetes Ready** - Includes manifests for standard K8s or K3s deployment
+- **🐳 Docker Ready** - Production-ready Docker Compose with configurable `.env` support
+
+## Installation
+
+### Using Docker (Recommended)
+
 ```bash
-python scan.py
+# Clone the repository
+git clone https://github.com/VilniusTechnology/wled-manager.git
+cd wled-manager
+
+# Start with Docker Compose
+docker compose up -d
+
+# Access the application
+# Web UI: http://localhost:5173
+# API: http://localhost:8000
 ```
 
-### Export to JSON
-```bash
-python scan.py --json --path wled_devices.json
+## Quick Start
+
+1. **Run Network Scan** - Navigate to "Network Scan" in the UI to discover devices.
+2. **Review Devices** - Check discovered devices on the "Devices" page.
+3. **Initialize Schedulers** - Go to "Schedulers" and click "Run Now" on each scheduler to initialize them.
+4. **Configure and manage Backups** - Set your preferred backup interval and retention settings in "App Config".
+5. **Manage Devices** - Use "Devices" page to manage devices, including adding, removing, and updating device configurations.
+6. **Compare device configs or backups** - Use "Compare Configs" page to compare device configs or backups.
+7. **Control devices** - Use "Device details" page to control devices.
+
+> **Important**: After installation, it is recommended to manually trigger schedulers once to ensure everything is working correctly.
+
+## Configuration
+
+Settings are configured via **two methods**:
+
+1. **Environment Variables**: For deployment-specific settings (Timezone, Network Range, Security).
+2. **Web UI Settings**: For application logic (Scanning intervals, Backup retention, Email settings, Timeouts).
+
+### Environment Variables
+
+Create a `.env` file in the project root (see `.env.example` for a full list):
+
+```env
+# Security (REQUIRED)
+SECRET=change_this_to_a_secure_random_string
+
+# Timezone
+TIMEZONE=Europe/London
+
+# Network Range (for scanning)
+NETWORK_RANGE=192.168.1.0/24
 ```
 
-### Export to CSV
-```bash
-python scan.py --csv --path wled_devices.csv
-```
+## Documentation
 
-### Export to both formats
-```bash
-python scan.py --json --csv --path wled_devices
-```
+- **[User Guide](ui/public/docs/user/)**: Detailed guides on using the dashboard, managing devices, and configuring backups.
+They also can be found in app itself in section "About".
+- **[Deployment Guide](docs/deployment/)**: Production deployment instructions for Docker and Kubernetes.
+- **[Development Guide](DEVELOPMENT.md)**: Guide for contributors and developers wanting to build or modify the project.
 
-### Custom timeout
-```bash
-# Quick scan with 0.5 second timeout
-python scan.py --timeout 0.5
+## License
 
-# Thorough scan with 2 second timeout for slower networks
-python scan.py --timeout 2.0
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-# Combined with export options
-python scan.py --timeout 1.5 --json --path wled_devices
-```
+## Acknowledgments
 
-## Command Line Options
-
-- `--json` - Export results to JSON format
-- `--csv` - Export results to CSV format  
-- `--path <filename>` - Specify output file path (required when using --json or --csv)
-- `--timeout <seconds>` - Set timeout for network requests in seconds (default: 1.0)
-
-## Output
-
-The scanner will display information about each found WLED device:
-- IP address
-- Device name
-- WLED version
-- LED count and power consumption
-- Current status and brightness
-- MAC address
-- WiFi signal strength
-
-## WLED API Endpoints Used
-
-The scanner uses the following WLED JSON API endpoints:
-- `/json/info` - Device information
-- `/json/state` - Current state
-- `/json/effects` - Available effects list
-- `/json/palettes` - Available color palettes list
-
-## Network Requirements
-
-- WLED devices must be on the same network segment (typically /24 subnet)
-- WLED devices must have JSON API enabled (default)
-- Network must allow HTTP requests on port 80
+- [WLED](https://github.com/Aircoookie/WLED) - The amazing LED control firmware

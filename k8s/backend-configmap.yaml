@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wled-manager-backend-config
+  namespace: wled
+data:
+  TZ: UTC
+  TIMEZONE: UTC
+  DATABASE_PATH: /app/database/wled_devices.db
+  BACKUP_DIR: /app/backups
+  BACKEND_HOST: 0.0.0.0
+  BACKEND_PORT: "8000"
+  # Scheduler controls
+  DISABLE_BACKUP_SCHEDULER: "false"
+  DISABLE_DEVICE_REFRESH_SCHEDULER: "false"
+  # Network scanning
+  NETWORK_RANGE: 192.168.1.0/24
+  SCAN_TIMEOUT: "1.0"
+  SCAN_MAX_WORKERS: "10"
+  REQUEST_DELAY: "0.5"
+  SCAN_DELAY: "0.1"
+  # Backup configuration
+  BACKUP_RETENTION_DAYS: "180"
+  BACKUP_INTERVAL: "86400"
+  BACKUP_MAX_WORKERS: "5"
+  # Device refresh configuration
+  DEVICE_REFRESH_INTERVAL: "604800"
+  DEVICE_REFRESH_MAX_WORKERS: "10"
+  # WLED API configuration
+  WLED_API_TIMEOUT: "5"

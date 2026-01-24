@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  input[type='text'],
+  input[type='password'],
+  input[type='email'],
+  input[type='number'],
+  input[type='url'],
+  input[type='search'],
+  input[type='tel'],
+  select,
+  textarea {
+    @apply px-3 py-2;
+  }
+}
+
+/* Device Action Button Styles */
+.device-action {
+  @apply text-sm font-medium transition-colors duration-200;
+}
+
+.device-action:hover:not(:disabled) {
+  @apply underline;
+}
+
+.device-action:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Specific action colors */
+.device-action-details {
+  @apply text-indigo-600 dark:text-indigo-400;
+}
+
+.device-action-backup {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.device-action-restore {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.device-action-visit {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.device-action-delete {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.device-action-adopt {
+  @apply text-purple-600 dark:text-purple-400;
+}
+
+.device-action-release {
+  @apply text-orange-600 dark:text-orange-400;
+}

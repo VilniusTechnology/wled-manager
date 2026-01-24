@@ -1,0 +1,43 @@
+# Development Dockerfile for WLED Manager Frontend UI
+# This Dockerfile is optimized for development with Vite hot reloading
+#
+# Build: docker build -f ui/Dockerfile.dev -t wled-manager-frontend:dev ./ui
+# Run: See docker-compose.dev.yml
+
+FROM node:20-alpine
+
+# Environment variables
+ENV NODE_ENV=development \
+    TZ=UTC
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies (if needed)
+# Alpine uses apk instead of apt-get
+# RUN apk add --no-cache \
+#     git \
+#     curl
+
+# Copy package files
+# These are copied first to leverage Docker layer caching
+# If dependencies don't change, this layer is cached
+COPY package*.json ./
+
+# Install dependencies
+# Use 'npm ci' for clean install based on package-lock.json
+# This ensures consistent dependencies across environments
+# Use 'npm install' to allow installing new dependencies without lockfile sync
+RUN npm install
+
+# Note: Source code is NOT copied here
+# In development, source code is mounted as a volume
+# This allows hot reloading without rebuilding the image
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Default command (will be overridden in docker-compose.dev.yml)
+# --host 0.0.0.0: Allow access from outside the container
+# --port 5173: Vite default development port
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

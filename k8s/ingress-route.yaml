@@ -1,0 +1,33 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: wled-manager
+  namespace: wled
+spec:
+  entryPoints:
+    - web
+  routes:
+    # WebSocket routes - these must come first for proper matching
+    - match: Host(`example.com`) && PathPrefix(`/ws`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # API routes
+    - match: Host(`example.com`) && PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # Backend health endpoint
+    - match: Host(`example.com`) && PathPrefix(`/health`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # UI routes - must be last as catch-all
+    - match: Host(`example.com`)
+      kind: Rule
+      services:
+        - name: wled-manager-frontend
+          port: 80
