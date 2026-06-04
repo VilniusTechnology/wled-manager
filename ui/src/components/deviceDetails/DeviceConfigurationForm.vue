@@ -8,6 +8,7 @@ import DeviceIdentitySettings from './config/DeviceIdentitySettings.vue'
 import NetworkSettings from './config/NetworkSettings.vue'
 import LedConfiguration from './config/LedConfiguration.vue'
 import LightSettings from './config/LightSettings.vue'
+import DefaultSettings from './config/DefaultSettings.vue'
 import SyncSettings from './config/SyncSettings.vue'
 import UserModSettings from './config/UserModSettings.vue'
 import AudioReactiveSettings from './config/AudioReactiveSettings.vue'
@@ -587,6 +588,7 @@ watch(() => props.device.latest_config, () => {
       <div v-show="activeTab === 'general'" class="space-y-8">
         <DeviceIdentitySettings v-model="configForm.id" />
         <LightSettings v-model="configForm.light" />
+        <DefaultSettings v-model="configForm.def" />
       </div>
 
       <!-- Network Tab -->
