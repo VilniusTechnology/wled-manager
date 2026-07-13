@@ -94,7 +94,18 @@
           <option :value="false">Sleep Disabled</option>
         </select>
       </div>
-
+      <!-- Turn On After Power Up Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Turn On at Boot:</label>
+        <select
+          v-model="filters.turnOnAfterPowerUp"
+          class="block w-32 pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option :value="null">All</option>
+          <option :value="true">Enabled</option>
+          <option :value="false">Disabled</option>
+        </select>
+      </div>
       <!-- Clear Filters Button -->
       <button
         @click="clearFilters"
@@ -127,7 +138,8 @@ const filters = reactive<DeviceFilters>({
   stateOn: initialFilters.stateOn ?? null,
   adopted: initialFilters.adopted !== undefined ? initialFilters.adopted : null,
   hasStaticIp: initialFilters.hasStaticIp !== undefined ? initialFilters.hasStaticIp : null,
-  wifiSleep: initialFilters.wifiSleep !== undefined ? initialFilters.wifiSleep : null
+  wifiSleep: initialFilters.wifiSleep !== undefined ? initialFilters.wifiSleep : null,
+  turnOnAfterPowerUp: initialFilters.turnOnAfterPowerUp !== undefined ? initialFilters.turnOnAfterPowerUp : null
 })
 
 const emit = defineEmits<{
@@ -142,6 +154,7 @@ const clearFilters = () => {
   filters.adopted = null
   filters.hasStaticIp = null
   filters.wifiSleep = null
+  filters.turnOnAfterPowerUp = null
   // The watch will automatically emit the changes
 }
 

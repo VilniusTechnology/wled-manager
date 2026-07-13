@@ -14,6 +14,7 @@ export interface Device {
   software_version?: string
   has_backups: boolean
   has_static_ip?: boolean  // Whether device has static IP configuration
+  turn_on_after_power_up?: boolean
   discovery_date_time?: string  // Created timestamp from wled_devices table
   // WLED specific fields
   arch?: string
@@ -39,6 +40,7 @@ export interface Device {
 export interface DeviceDetails extends Device {
   adopted: boolean
   has_static_ip?: boolean
+  turn_on_after_power_up?: boolean
   latest_info?: any
   latest_state?: any
   latest_config?: any

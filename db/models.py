@@ -50,6 +50,7 @@ class WLEDDevice(BaseModel):
     led_count: Optional[int] = None
     has_static_ip: Optional[bool] = None
     wifi_sleep: Optional[bool] = None
+    turn_on_after_power_up: Optional[bool] = None
     usermod_url: Optional[str] = None
 
     class Config:

@@ -39,6 +39,7 @@ class WLEDDeviceBaseDTO(BaseModel):
     adopted: Optional[bool] = False
     status: Optional[str] = None
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
+    turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
     usermod_url: Optional[str] = None
 
 class WLEDDeviceCreateDTO(WLEDDeviceBaseDTO):
@@ -85,6 +86,7 @@ class DeviceShortInfoDTO(BaseModel):
     has_backups: bool = False
     has_static_ip: Optional[bool] = None  # Whether device has static IP configuration
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
+    turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
     usermod_url: Optional[str] = None
     discovery_date_time: Optional[datetime] = None  # Created timestamp from wled_devices table
     # Keep old fields for compatibility
@@ -135,6 +137,7 @@ class DeviceFullDetailsDTO(BaseModel):
     architecture: Optional[str] = None  # ESP8266 or ESP32
     has_static_ip: Optional[bool] = None  # Whether device has static IP configuration
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
+    turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
     usermod_url: Optional[str] = None
     
     class Config:

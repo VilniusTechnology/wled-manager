@@ -152,6 +152,8 @@ def build_device_full_details_dto(device, latest_info=None) -> DeviceFullDetails
         details.has_static_ip = device.has_static_ip
     if device.wifi_sleep is not None:
         details.wifi_sleep = device.wifi_sleep
+    if device.turn_on_after_power_up is not None:
+        details.turn_on_after_power_up = device.turn_on_after_power_up
 
     # If we have latest info, extract and overwrite/set the detailed fields
     if latest_info:
@@ -218,6 +220,8 @@ def build_device_full_details_dto(device, latest_info=None) -> DeviceFullDetails
         # WiFi Sleep
         if 'wifi' in cfg and isinstance(cfg['wifi'], dict) and 'sleep' in cfg['wifi'] and details.wifi_sleep is None:
             details.wifi_sleep = bool(cfg['wifi']['sleep'])
+        if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and details.turn_on_after_power_up is None:
+            details.turn_on_after_power_up = bool(cfg['def']['on'])
     
     return details
 
@@ -260,6 +264,8 @@ def build_device_short_info_dto(device, latest_info=None) -> DeviceShortInfoDTO:
 
     if device.wifi_sleep is not None:
         short_info.wifi_sleep = device.wifi_sleep
+    if device.turn_on_after_power_up is not None:
+        short_info.turn_on_after_power_up = device.turn_on_after_power_up
 
     # If we have latest info, extract and set additional fields (as fallback or supplement)
     if latest_info:
@@ -292,6 +298,8 @@ def build_device_short_info_dto(device, latest_info=None) -> DeviceShortInfoDTO:
         # WiFi Sleep
         if 'wifi' in cfg and isinstance(cfg['wifi'], dict) and 'sleep' in cfg['wifi'] and short_info.wifi_sleep is None:
             short_info.wifi_sleep = bool(cfg['wifi']['sleep'])
+        if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and short_info.turn_on_after_power_up is None:
+            short_info.turn_on_after_power_up = bool(cfg['def']['on'])
         
         # Set last seen from latest timestamp
         if latest_info.get('timestamp'):

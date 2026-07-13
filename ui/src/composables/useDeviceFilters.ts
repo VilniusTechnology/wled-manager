@@ -19,7 +19,8 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
       filters.value.stateOn !== null ||
       filters.value.adopted !== null ||
       filters.value.hasStaticIp !== null ||
-      filters.value.wifiSleep !== null
+      filters.value.wifiSleep !== null ||
+      filters.value.turnOnAfterPowerUp !== null
 
     if (!hasActiveFilters) {
       return devices.value
@@ -92,6 +93,13 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
       // WiFi Sleep filter
       if (filters.value.wifiSleep !== null && toBool(device.wifi_sleep) !== filters.value.wifiSleep) {
         return false
+      }
+
+      // Turn on after power up Filter
+      if (filters.value.turnOnAfterPowerUp !== null) {
+        if (toBool(device.turn_on_after_power_up) !== filters.value.turnOnAfterPowerUp) {
+          return false
+        }
       }
 
       return true

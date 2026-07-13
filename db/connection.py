@@ -166,7 +166,8 @@ def create_table():
             'architecture': 'TEXT',
             'led_count': 'INTEGER',
             'has_static_ip': 'BOOLEAN',
-            'wifi_sleep': 'BOOLEAN'
+            'wifi_sleep': 'BOOLEAN',
+            'turn_on_after_power_up': 'BOOLEAN'
         }
         
         for col, type_ in new_columns.items():

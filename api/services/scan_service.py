@@ -110,6 +110,7 @@ WLED_DB_FIELD_MAPPING = {
     "architecture": ("info_full", ("arch",), str),
     "led_count": ("info_full", ("leds", "count"), int),
     "wifi_sleep": ("cfg_full", ("wifi", "sleep"), bool),
+    "turn_on_after_power_up": ("cfg_full", ("def", "on"), bool),
 }
 
 def extract_device_details(info: Dict[str, Any]) -> Dict[str, Any]:

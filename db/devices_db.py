@@ -49,6 +49,9 @@ def insert_or_update_wled_device(device: WLEDDevice):
             if device.wifi_sleep is not None:
                 update_fields.append('wifi_sleep = ?')
                 values.append(device.wifi_sleep)
+            if device.turn_on_after_power_up is not None:
+                update_fields.append('turn_on_after_power_up = ?')
+                values.append(device.turn_on_after_power_up)
             if device.usermod_url is not None:
                 update_fields.append('usermod_url = ?')
                 values.append(device.usermod_url)
@@ -73,7 +76,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
                 'name', 
                 'hostname', 'name', 'adopted', 'last_seen', 'status', 
                 'software_version', 'wifi_signal', 'state_on', 'architecture', 'led_count', 'has_static_ip',
-                'wifi_sleep', 'usermod_url',
+                'wifi_sleep', 'turn_on_after_power_up', 'usermod_url',
                 'created', 'updated']
             values = [
                 device.id, 
@@ -92,6 +95,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
                 device.led_count,
                 device.has_static_ip,
                 device.wifi_sleep,
+                device.turn_on_after_power_up,
                 device.usermod_url,
                 datetime.datetime.utcnow(),  # created
                 datetime.datetime.utcnow()   # updated
@@ -153,6 +157,9 @@ def update_wled_device_partial(updates: Dict[str, Any], mac: str):
         if 'wifi_sleep' in updates:
             update_fields.append('wifi_sleep = ?')
             values.append(updates['wifi_sleep'])
+        if 'turn_on_after_power_up' in updates:
+            update_fields.append('turn_on_after_power_up = ?')
+            values.append(updates['turn_on_after_power_up'])
         if 'usermod_url' in updates:
             update_fields.append('usermod_url = ?')
             values.append(updates['usermod_url'])
@@ -196,6 +203,9 @@ def get_wled_device(mac: str) -> Optional[WLEDDevice]:
 
             if 'wifi_sleep' in data and isinstance(data['wifi_sleep'], int):
                 data['wifi_sleep'] = bool(data['wifi_sleep'])
+                
+            if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
+                data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
             
             return WLEDDevice(**data)
         return None
@@ -282,6 +292,9 @@ def get_all_wled_devices() -> List[WLEDDevice]:
 
                 if 'wifi_sleep' in data and isinstance(data['wifi_sleep'], int):
                     data['wifi_sleep'] = bool(data['wifi_sleep'])
+                    
+                if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
+                    data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
                 
                 devices.append(WLEDDevice(**data))
             return devices
