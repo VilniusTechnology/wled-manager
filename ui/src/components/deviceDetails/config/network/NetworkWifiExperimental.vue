@@ -12,11 +12,9 @@ defineProps<{
       <input
         v-model="wifi.sleep"
         type="checkbox"
-        :true-value="false"
-        :false-value="true"
         class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
       />
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Disable WiFi sleep</span>
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enable WiFi sleep</span>
     </label>
     </div>
     <div class="flex items-center mt-2">

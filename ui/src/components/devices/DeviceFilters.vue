@@ -32,26 +32,28 @@
 
       <!-- Has Backups Filter -->
       <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            v-model="filters.hasBackups"
-            type="checkbox"
-            class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-          />
-          Has Backups
-        </label>
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Backups:</label>
+        <select
+          v-model="filters.hasBackups"
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option :value="null">All</option>
+          <option :value="true">Has Backups</option>
+          <option :value="false">No Backups</option>
+        </select>
       </div>
 
       <!-- State On Filter -->
       <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            v-model="filters.stateOn"
-            type="checkbox"
-            class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-          />
-          State On
-        </label>
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">State:</label>
+        <select
+          v-model="filters.stateOn"
+          class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option :value="null">All States</option>
+          <option :value="true">State On</option>
+          <option :value="false">State Off</option>
+        </select>
       </div>
 
       <!-- Adopted Filter -->
@@ -82,16 +84,15 @@
 
       <!-- WiFi Sleep Filter -->
       <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            v-model="filters.wifiSleep"
-            type="checkbox"
-            :true-value="true"
-            :false-value="null"
-            class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-          />
-          WiFi Sleep
-        </label>
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">WiFi Sleep:</label>
+        <select
+          v-model="filters.wifiSleep"
+          class="block w-32 pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option :value="null">All</option>
+          <option :value="true">Sleep Enabled</option>
+          <option :value="false">Sleep Disabled</option>
+        </select>
       </div>
 
       <!-- Clear Filters Button -->
@@ -109,14 +110,24 @@
 import { reactive, watch } from 'vue'
 import type { DeviceFilters } from '../../types/deviceFilters'
 
+const savedFiltersStr = sessionStorage.getItem('deviceFilters')
+let initialFilters: Partial<DeviceFilters> = {}
+if (savedFiltersStr) {
+  try {
+    initialFilters = JSON.parse(savedFiltersStr)
+  } catch (e) {
+    console.error('Failed to parse saved device filters', e)
+  }
+}
+
 const filters = reactive<DeviceFilters>({
-  status: '',
-  search: '',
-  hasBackups: false,
-  stateOn: false,
-  adopted: null,
-  hasStaticIp: null,
-  wifiSleep: null
+  status: initialFilters.status ?? '',
+  search: initialFilters.search ?? '',
+  hasBackups: initialFilters.hasBackups ?? null,
+  stateOn: initialFilters.stateOn ?? null,
+  adopted: initialFilters.adopted !== undefined ? initialFilters.adopted : null,
+  hasStaticIp: initialFilters.hasStaticIp !== undefined ? initialFilters.hasStaticIp : null,
+  wifiSleep: initialFilters.wifiSleep !== undefined ? initialFilters.wifiSleep : null
 })
 
 const emit = defineEmits<{
@@ -126,16 +137,17 @@ const emit = defineEmits<{
 const clearFilters = () => {
   filters.status = ''
   filters.search = ''
-  filters.hasBackups = false
-  filters.stateOn = false
+  filters.hasBackups = null
+  filters.stateOn = null
   filters.adopted = null
   filters.hasStaticIp = null
   filters.wifiSleep = null
   // The watch will automatically emit the changes
 }
 
-// Watch for filter changes and emit them
+// Watch for filter changes, save to sessionStorage and emit them
 watch(filters, (newFilters) => {
+  sessionStorage.setItem('deviceFilters', JSON.stringify(newFilters))
   emit('filtersChanged', { ...newFilters })
 }, { deep: true, immediate: true })
 

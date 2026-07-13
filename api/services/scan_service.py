@@ -93,37 +93,52 @@ async def create_backup_and_version_records(
     insert_device_version(device_version)
     logger.debug("Version record created successfully")
 
+# ==============================================================================
+# DEVICE FIELD MAPPING CONFIGURATION
+# ==============================================================================
+# IMPORTANT: When adding new fields to the wled_devices database table,
+# you MUST add them to this mapping to ensure they are extracted from the WLED 
+# JSON responses and saved to the database. If you forget to add them here,
+# the database will contain stale/missing data, causing bugs in UI and filters!
+# 
+# Format: "db_column_name": ("root_key", ("path", "to", "field"), type_cast_function)
+# ==============================================================================
+WLED_DB_FIELD_MAPPING = {
+    "software_version": ("info_full", ("ver",), str),
+    "wifi_signal": ("info_full", ("wifi", "signal"), int),
+    "state_on": ("state_full", ("on",), bool),
+    "architecture": ("info_full", ("arch",), str),
+    "led_count": ("info_full", ("leds", "count"), int),
+    "wifi_sleep": ("cfg_full", ("wifi", "sleep"), bool),
+}
+
 def extract_device_details(info: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract denormalized fields from device info."""
+    """Extract denormalized fields from device info using the automated mapping."""
     details = {}
     
-    info_full = info.get("info_full", {})
-    state_full = info.get("state_full", {})
-    cfg_full = info.get("cfg_full", {})
-    
-    # Software Version
-    if 'ver' in info_full:
-        details['software_version'] = str(info_full['ver'])
-        
-    # WiFi Signal
-    if 'wifi' in info_full and isinstance(info_full['wifi'], dict) and 'signal' in info_full['wifi']:
-        details['wifi_signal'] = info_full['wifi']['signal']
-        
-    # State On
-    if 'on' in state_full:
-        details['state_on'] = bool(state_full['on'])
-        
-    # Architecture
-    if 'arch' in info_full:
-        details['architecture'] = str(info_full['arch'])
-        
-    # LED Count
-    if 'leds' in info_full and isinstance(info_full['leds'], dict) and 'count' in info_full['leds']:
-        details['led_count'] = info_full['leds']['count']
-        
-    # Static IP
+    # 1. Automated Extraction via Mapping
+    for db_field, (root_key, path, type_cast) in WLED_DB_FIELD_MAPPING.items():
+        try:
+            current_level = info.get(root_key, {})
+            # Traverse the nested path
+            for key in path:
+                if isinstance(current_level, dict) and key in current_level:
+                    current_level = current_level[key]
+                else:
+                    # Path not found
+                    current_level = None
+                    break
+            
+            # Apply type casting if value was found
+            if current_level is not None:
+                details[db_field] = type_cast(current_level)
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Error casting field {db_field} to {type_cast.__name__}: {e}")
+
+    # 2. Complex/Custom Extractions
+    # Static IP requires evaluating multiple fields to determine status
     try:
-        details['has_static_ip'] = detect_static_ip_config(cfg_full)
+        details['has_static_ip'] = detect_static_ip_config(info.get("cfg_full", {}))
     except Exception:
         pass
         

@@ -3,6 +3,8 @@ import type { Device } from '../types/device'
 import type { DeviceFilters } from '../types/deviceFilters'
 
 export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilters>) => {
+  const toBool = (val: any): boolean => val === true || val === 1 || val === 'true' || val === '1'
+
   const filteredDevices = computed(() => {
     // If no devices, return empty array
     if (!devices.value || devices.value.length === 0) {
@@ -13,8 +15,8 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
     const hasActiveFilters =
       filters.value.status ||
       filters.value.search ||
-      filters.value.hasBackups ||
-      filters.value.stateOn ||
+      filters.value.hasBackups !== null ||
+      filters.value.stateOn !== null ||
       filters.value.adopted !== null ||
       filters.value.hasStaticIp !== null ||
       filters.value.wifiSleep !== null
@@ -68,27 +70,27 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
       }
 
       // Has Backups filter
-      if (filters.value.hasBackups && !device.has_backups) {
+      if (filters.value.hasBackups !== null && toBool(device.has_backups) !== filters.value.hasBackups) {
         return false
       }
 
       // State On filter
-      if (filters.value.stateOn && !device.state_on) {
+      if (filters.value.stateOn !== null && toBool(device.state_on) !== filters.value.stateOn) {
         return false
       }
 
       // Adopted filter
-      if (filters.value.adopted !== null && device.adopted !== filters.value.adopted) {
+      if (filters.value.adopted !== null && toBool(device.adopted) !== filters.value.adopted) {
         return false
       }
 
       // Static IP filter
-      if (filters.value.hasStaticIp !== null && device.has_static_ip !== filters.value.hasStaticIp) {
+      if (filters.value.hasStaticIp !== null && toBool(device.has_static_ip) !== filters.value.hasStaticIp) {
         return false
       }
 
       // WiFi Sleep filter
-      if (filters.value.wifiSleep !== null && device.wifi_sleep !== filters.value.wifiSleep) {
+      if (filters.value.wifiSleep !== null && toBool(device.wifi_sleep) !== filters.value.wifiSleep) {
         return false
       }
 
