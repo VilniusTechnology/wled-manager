@@ -18,12 +18,18 @@ export class BaseApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      const isFormData = options.body instanceof FormData
+      const headers = { ...options.headers } as Record<string, string>
+      
+      if (!isFormData && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json'
+      } else if (isFormData && headers['Content-Type'] === 'application/json') {
+        delete headers['Content-Type']
+      }
+
       const response = await fetch(buildApiUrl(endpoint), {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
         ...options,
+        headers,
       })
 
       if (!response.ok) {

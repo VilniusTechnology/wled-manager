@@ -363,7 +363,7 @@ interface Scheduler {
 }
 
 const schedulers = ref<Scheduler[]>([])
-const settings = ref<AppSettings>({})
+const settings = ref<AppSettings>({} as AppSettings)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const successMessage = ref<string | null>(null)

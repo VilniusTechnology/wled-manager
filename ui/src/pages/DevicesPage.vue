@@ -10,7 +10,6 @@ import DeviceFiltersComponent from '../components/devices/DeviceFilters.vue'
 import DevicesGridView from '../components/devices/DevicesGridView.vue'
 import DevicesListView from '../components/devices/DevicesListView.vue'
 import BackupDialog from '../components/shared/BackupDialog.vue'
-import RestoreDialog from '../components/shared/RestoreDialog.vue'
 import Modal from '../components/shared/Modal.vue'
 import NotificationModal from '../components/shared/NotificationModal.vue'
 import ReleaseConfirmationModal from '../components/modals/ReleaseConfirmationModal.vue'
@@ -58,7 +57,7 @@ const currentFilters = ref<DeviceFilters>({
   stateOn: false,
   adopted: null,
   hasStaticIp: null,
-  wifiSleep: null
+  wifiSleep: null, turnOnAfterPowerUp: null
 })
 
 // Device selection state
@@ -76,7 +75,6 @@ const showBackupDialog = ref(false)
 const backupDeviceData = ref<any>(null)
 
 // Restore dialog state
-const showRestoreDialog = ref(false)
 const restoreDeviceData = ref<any>(null)
 const deviceBackups = ref<any[]>([])
 const isRestoring = ref(false)
@@ -207,7 +205,7 @@ const restoreDevice = async (deviceId: string) => {
     
     deviceBackups.value = backups.value[mac] || []
     console.log('Device backups set to:', deviceBackups.value)
-    showRestoreDialog.value = true
+    router.push(`/devices/${deviceId}?tab=backups`)
   } else {
     console.error('Device not found:', deviceId)
   }
@@ -324,12 +322,6 @@ const closeBackupDialog = () => {
   backupDeviceData.value = null
 }
 
-const closeRestoreDialog = () => {
-  showRestoreDialog.value = false
-  restoreDeviceData.value = null
-  deviceBackups.value = []
-}
-
 const closeAdoptDialog = () => {
   showAdoptDialog.value = false
   adoptDeviceData.value = null
@@ -350,22 +342,6 @@ const handleBackupConfirmed = async (device: any, _options: { config: boolean; p
   }
 }
 
-const handleRestoreConfirmed = async (device: any, backupId: string, options: { config: boolean; presets: boolean }) => {
-  try {
-    isRestoring.value = true
-    await performRestore(device.device_id || device.id, backupId, options.config, options.presets)
-    // Refresh devices after restore
-    emit('refresh-devices')
-  } catch (error) {
-    console.error('Restore failed:', error)
-    notificationTitle.value = 'Restore Failed'
-    notificationMessage.value = `Restore failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    notificationType.value = 'error'
-    showNotificationModal.value = true
-  } finally {
-    isRestoring.value = false
-  }
-}
 
 const handleAdoptConfirmed = async () => {
   if (!adoptDeviceData.value || !newDeviceLocalName.value.trim()) return
@@ -623,14 +599,6 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
       @backup="handleBackupConfirmed"
     />
 
-    <!-- Restore Dialog -->
-    <RestoreDialog
-      :is-open="showRestoreDialog"
-      :device="restoreDeviceData"
-      :available-backups="deviceBackups"
-      @close="closeRestoreDialog"
-      @restore="handleRestoreConfirmed"
-    />
 
     <!-- Adopt Device Modal -->
     <Modal :is-open="showAdoptDialog" :title="`Adopt Device: ${adoptDeviceData?.name || 'Unknown Device'}`" @close="closeAdoptDialog">

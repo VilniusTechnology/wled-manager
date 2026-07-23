@@ -46,6 +46,10 @@ class AdoptDeviceRequest(BaseModel):
     device_id: str
     local_device_name: str
 
+class MassHealthcheckRequest(BaseModel):
+    ips: List[str]
+
+
 class ReleaseDeviceRequest(BaseModel):
     device_ids: List[str]
 
@@ -208,6 +212,22 @@ def adopt_devices_route(request: List[AdoptDeviceRequest]):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/devices/release", response_model=SuccessResponse, summary="Release devices")
+@router.post("/devices/healthcheck", summary="Perform health check on multiple devices")
+async def mass_device_healthcheck(request: MassHealthcheckRequest):
+    logger.info(f"Performing mass healthcheck for {len(request.ips)} IPs")
+    results = {}
+    for ip in request.ips:
+        status, grade, rtt, err, mac = await check_device_health_status(ip)
+        results[ip] = {
+            "status": status,
+            "grade": grade,
+            "response_time": rtt,
+            "error": err,
+            "mac": mac
+        }
+    return {"success": True, "results": results}
+
+
 def release_devices_route(request: ReleaseDeviceRequest):
     """Release multiple WLED devices by setting adopted to null."""
     logger.info(f"Releasing {len(request.device_ids)} devices")

@@ -55,7 +55,7 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
       <DeviceListActions
-        :device-id="device.id || device.device_id || ''"
+        :device-id="String(device.id || device.device_id || '')"
         :is-adopted="Boolean(device.adopted)"
         :is-restoring="props.isRestoring"
         @viewDetails="$emit('viewDetails', $event)"

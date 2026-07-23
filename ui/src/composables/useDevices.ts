@@ -136,7 +136,7 @@ export function useDevices() {
     try {
       console.log('Updating device config:', deviceId)
       const response = await fetch(buildApiUrl(API_ENDPOINTS.DEVICE_CONFIG(deviceId)), {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },

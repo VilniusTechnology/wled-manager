@@ -237,7 +237,7 @@ import { settingsService, type AppSettings } from '../services/settingsService';
 import { useAppSettingsStore } from '../stores/appSettingsStore';
 
 const store = useAppSettingsStore();
-const settings = ref<AppSettings>({});
+const settings = ref<AppSettings>({} as AppSettings);
 const isLoading = ref(true);
 const isSaving = ref(false);
 const isTesting = ref(false);

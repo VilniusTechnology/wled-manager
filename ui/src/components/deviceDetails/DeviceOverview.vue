@@ -33,9 +33,9 @@ interface Props {
   device: DeviceDetails
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-const emit = defineEmits<{
+defineEmits<{
   'device-updated': []
 }>()
 

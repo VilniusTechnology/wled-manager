@@ -61,14 +61,6 @@
     @backup="handleBackupConfirmed"
   />
 
-  <!-- Restore Dialog -->
-  <RestoreDialog
-    :is-open="showRestoreDialog"
-    :device="deviceData || null"
-    :available-backups="availableBackups || []"
-    @close="closeRestoreDialog"
-    @restore="handleRestoreConfirmed"
-  />
 
   <!-- Adopt Dialog -->
   <Modal :is-open="showAdoptDialog" :title="`Adopt Device: ${deviceData?.name || 'Unknown Device'}`" @close="closeAdoptDialog">
@@ -108,8 +100,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import BackupDialog from '../../components/shared/BackupDialog.vue'
-import RestoreDialog from '../../components/shared/RestoreDialog.vue'
 import Modal from '../../components/shared/Modal.vue'
 import type { Device } from '../../types/device'
 import type { Backup } from '../../types/backup'
@@ -123,6 +115,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
+
 
 const emit = defineEmits<{
   'view-details': [deviceId: string]
@@ -136,7 +130,6 @@ const emit = defineEmits<{
 
 // Dialog state
 const showBackupDialog = ref(false)
-const showRestoreDialog = ref(false)
 const showAdoptDialog = ref(false)
 const newDeviceLocalName = ref('')
 
@@ -150,12 +143,9 @@ const closeBackupDialog = () => {
 }
 
 const openRestoreDialog = () => {
-  showRestoreDialog.value = true
+  router.push(`/devices/${props.deviceId}?tab=backups`)
 }
 
-const closeRestoreDialog = () => {
-  showRestoreDialog.value = false
-}
 
 const openAdoptDialog = () => {
   showAdoptDialog.value = true
@@ -171,11 +161,6 @@ const closeAdoptDialog = () => {
 const handleBackupConfirmed = (_device: Device, _options: { config: boolean; presets: boolean }) => {
   emit('backup-device', props.deviceId)
   closeBackupDialog()
-}
-
-const handleRestoreConfirmed = (_device: Device, _backupId: string, _options: { config: boolean; presets: boolean }) => {
-  emit('restore-device', props.deviceId)
-  closeRestoreDialog()
 }
 
 const handleAdoptConfirmed = () => {
