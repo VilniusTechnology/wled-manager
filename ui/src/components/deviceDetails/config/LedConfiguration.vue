@@ -94,6 +94,7 @@ const addOutput = () => {
     order: 0,
     rev: false,
     skip: false,
+    off: false,
     type: 22,
     ref: false
   })
@@ -307,6 +308,10 @@ watch(() => props.modelValue.hw.led.ins, (newIns) => {
                 <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" v-model="output.skip" class="rounded text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600" />
                     <span class="text-sm text-gray-700 dark:text-gray-300">Skip First</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" v-model="output.off" class="rounded text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600" />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Off Refresh</span>
                 </label>
             </div>
 

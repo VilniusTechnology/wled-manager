@@ -558,11 +558,9 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
       :view-mode="viewMode"
       :is-loading="props.isLoading"
       :scan-in-progress="scanInProgress"
-      :selected-count="selectedDevices.size"
       @set-view-mode="setViewMode"
       @refresh-devices="refreshDevices"
       @scan-network="scanNetwork"
-      @mass-ota-update="openMassOTADialog"
       @add-device="showAddDeviceModal = true"
     />
 
@@ -613,6 +611,8 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
       @releaseDevice="releaseDevice"
       @toggle-device-selection="toggleDeviceSelection"
       @toggle-select-all="toggleSelectAll"
+      @mass-ota-update="openMassOTADialog"
+      @clear-selection="clearSelection"
     />
 
     <!-- Backup Dialog -->

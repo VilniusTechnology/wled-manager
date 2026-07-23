@@ -31,8 +31,7 @@ const emit = defineEmits<{
 
 const onlineDevices = computed(() => props.devices.filter((d: Device) => {
   const status = (d.status || '').toLowerCase()
-  // Count as online only if status is explicitly healthy (online, excellent, good)
-  return status === 'online' || status === 'excellent' || status === 'good'
+  return !['offline', 'dead', 'almost_offline'].includes(status)
 }).length)
 const offlineDevices = computed(() => props.devices.length - onlineDevices.value)
 

@@ -56,28 +56,6 @@
         <span v-else>Scan Network</span>
       </button>
 
-      <button
-        v-if="selectedCount > 0"
-        @click="$emit('mass-ota-update')"
-        class="px-3 py-1.5 rounded border border-orange-300 dark:border-orange-600 bg-orange-600 text-white flex items-center gap-2 hover:bg-orange-700"
-        title="Update selected devices with new firmware"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <span>Mass OTA ({{ selectedCount }})</span>
-      </button>
-
-      <div
-        v-else
-        class="px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center gap-2 cursor-not-allowed"
-        title="Switch to list view and select devices to enable mass OTA"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <span>Mass OTA</span>
-      </div>
     </div>
   </div>
 </template>
@@ -92,7 +70,6 @@ interface Props {
   viewMode: string
   isLoading: boolean
   scanInProgress: boolean
-  selectedCount: number
 }
 
 defineProps<Props>()
@@ -101,7 +78,6 @@ defineEmits<{
   'set-view-mode': [mode: string]
   'refresh-devices': []
   'scan-network': []
-  'mass-ota-update': []
   'add-device': []
 }>()
 </script>

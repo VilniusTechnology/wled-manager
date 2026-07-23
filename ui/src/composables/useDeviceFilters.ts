@@ -30,18 +30,19 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
     return devices.value.filter(device => {
       // Status filter
       if (filters.value.status) {
+        const status = (device.status || '').toLowerCase()
         if (filters.value.status === 'online') {
-          // Show only devices with healthy status (online, excellent, good)
-          const status = (device.status || '').toLowerCase()
-          if (status !== 'online' && status !== 'excellent' && status !== 'good') {
+          // Show all devices that are online (exclude offline, dead, almost_offline)
+          if (status === 'offline' || status === 'dead' || status === 'almost_offline') {
             return false
           }
         } else if (filters.value.status === 'offline') {
-          // Group 'dead' with 'offline' for filtering
-          if (device.status !== 'offline' && device.status !== 'dead') {
+          // Group 'offline' with bad connectivity ('dead', 'almost_offline')
+          if (status !== 'offline' && status !== 'dead' && status !== 'almost_offline') {
             return false
           }
-        } else if (device.status !== filters.value.status) {
+        } else if (status !== filters.value.status) {
+          // Exact match for other connection health statuses
           return false
         }
       }

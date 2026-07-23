@@ -1,6 +1,33 @@
 <template>
   <div class="mb-8">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <!-- Mass Actions Bar -->
+      <div v-if="selectedDevices.size > 0" class="bg-orange-50/50 dark:bg-orange-900/10 px-6 py-3 border-b border-orange-100 dark:border-orange-800/30">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center text-orange-700 dark:text-orange-300 font-medium">
+            <span class="bg-orange-100 dark:bg-orange-800 py-0.5 px-2 rounded text-xs font-bold mr-2">{{ selectedDevices.size }}</span>
+            <span>selected</span>
+          </div>
+          <div class="flex flex-wrap gap-2 justify-center sm:justify-end">
+            <button
+              @click="$emit('massOtaUpdate')"
+              class="px-3 py-1.5 text-xs flex items-center rounded border border-orange-300 dark:border-orange-600 bg-orange-600 text-white hover:bg-orange-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1.5 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Mass OTA
+            </button>
+            <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+            <button
+              @click="$emit('clearSelection')"
+              class="px-3 py-1.5 text-xs flex items-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <DeviceListHeader 
@@ -65,6 +92,8 @@ const emit = defineEmits<{
   releaseDevice: [deviceId: string]
   toggleDeviceSelection: [deviceId: string]
   toggleSelectAll: []
+  massOtaUpdate: []
+  clearSelection: []
   sortChanged: [sortData: { field: string, direction: 'asc' | 'desc' }]
 }>()
 
