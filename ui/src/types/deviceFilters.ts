@@ -7,4 +7,6 @@ export interface DeviceFilters {
   hasStaticIp: boolean | null // null = show all, true = only static IP, false = only DHCP
   wifiSleep: boolean | null
   turnOnAfterPowerUp: boolean | null
+  architecture: string
+  softwareVersion: string
 }

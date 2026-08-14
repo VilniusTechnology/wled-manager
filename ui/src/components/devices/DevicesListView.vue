@@ -18,6 +18,15 @@
               </svg>
               Mass OTA
             </button>
+            <button
+              @click="$emit('massHealthCheck')"
+              class="px-3 py-1.5 text-xs flex items-center rounded border border-blue-300 dark:border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1.5 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Health Check
+            </button>
             <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
             <button
               @click="$emit('clearSelection')"
@@ -93,6 +102,7 @@ const emit = defineEmits<{
   toggleDeviceSelection: [deviceId: string]
   toggleSelectAll: []
   massOtaUpdate: []
+  massHealthCheck: []
   clearSelection: []
   sortChanged: [sortData: { field: string, direction: 'asc' | 'desc' }]
 }>()

@@ -88,6 +88,9 @@ class DeviceShortInfoDTO(BaseModel):
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
     turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
     usermod_url: Optional[str] = None
+    architecture: Optional[str] = None
+    brand: Optional[str] = None
+    product: Optional[str] = None
     discovery_date_time: Optional[datetime] = None  # Created timestamp from wled_devices table
     # Keep old fields for compatibility
     id: Optional[str] = None

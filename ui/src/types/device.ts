@@ -17,6 +17,7 @@ export interface Device {
   turn_on_after_power_up?: boolean
   discovery_date_time?: string  // Created timestamp from wled_devices table
   // WLED specific fields
+  architecture?: string
   arch?: string
   brand?: string
   product?: string

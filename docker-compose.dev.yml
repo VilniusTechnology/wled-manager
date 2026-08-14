@@ -83,7 +83,7 @@ services:
 
     # Port mapping: host:container
     ports:
-      - "5174:5173"
+      - "5175:5173"
 
     # Volume mounts for hot reloading
     volumes:

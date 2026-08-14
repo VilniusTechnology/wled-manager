@@ -134,6 +134,19 @@ def get_local_ip():
 
 def scan_network_check_ip(ip, timeout):
     """Helper function to check a single IP using connection pooling."""
+    import socket
+    # Fast TCP check to skip offline IPs quickly
+    try:
+        # Use a 5.0s connect timeout to accommodate devices with slow Wi-Fi
+        with socket.create_connection((ip, 80), timeout=5.0):
+            pass
+    except Exception:
+        return None
+
+    # Cap HTTP timeouts: 5.0s for connect, max 10.0s for read
+    if not isinstance(timeout, tuple):
+        timeout = (5.0, min(float(timeout), 10.0))
+
     # Create a new session for each check to avoid thread-local state issues
     with requests.Session() as session:
         # Configure connection pooling

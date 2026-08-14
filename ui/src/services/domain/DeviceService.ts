@@ -94,6 +94,13 @@ export class DeviceService extends BaseApiService {
   }
 
   /**
+   * Perform mass health check on specific IPs
+   */
+  async performMassHealthCheck(ips: string[]) {
+    return this.post('/devices/healthcheck', { ips })
+  }
+
+  /**
    * Refresh all devices by scanning their IPs
    */
   async refreshDevices() {

@@ -70,6 +70,9 @@ const massOTAFile = ref<File | null>(null)
 const isMassOTAInProgress = ref(false)
 const massOTAResults = ref<any>(null)
 
+// Mass Health Check state
+const isMassHealthCheckInProgress = ref(false)
+
 // Backup dialog state
 const showBackupDialog = ref(false)
 const backupDeviceData = ref<any>(null)
@@ -489,6 +492,36 @@ const performMassOTAUpdate = async () => {
   }
 }
 
+const performMassHealthCheck = async () => {
+  if (selectedDevices.value.size === 0) return
+  
+  isMassHealthCheckInProgress.value = true
+  
+  try {
+    const selectedIps = Array.from(selectedDevices.value)
+      .map(id => props.devices.find(d => d.device_id === id || d.id === id)?.last_ip)
+      .filter((ip): ip is string => Boolean(ip))
+      
+    if (selectedIps.length > 0) {
+      await deviceService.performMassHealthCheck(selectedIps)
+      emit('refresh-devices')
+      notificationTitle.value = 'Success'
+      notificationMessage.value = `Health check completed for ${selectedIps.length} devices.`
+      notificationType.value = 'success'
+      showNotificationModal.value = true
+      clearSelection()
+    }
+  } catch (error) {
+    console.error('Mass health check failed:', error)
+    notificationTitle.value = 'Error'
+    notificationMessage.value = `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    notificationType.value = 'error'
+    showNotificationModal.value = true
+  } finally {
+    isMassHealthCheckInProgress.value = false
+  }
+}
+
 // Device selection functions
 const toggleDeviceSelection = (deviceId: string) => {
   if (selectedDevices.value.has(deviceId)) {
@@ -548,6 +581,7 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
 
     <DeviceFiltersComponent 
       ref="deviceFiltersRef"
+      :devices="devicesRef"
       @filters-changed="handleFiltersChanged" 
     />
 
@@ -588,6 +622,7 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
       @toggle-device-selection="toggleDeviceSelection"
       @toggle-select-all="toggleSelectAll"
       @mass-ota-update="openMassOTADialog"
+      @mass-health-check="performMassHealthCheck"
       @clear-selection="clearSelection"
     />
 

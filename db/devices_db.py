@@ -73,7 +73,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
             # Insert new device
             insert_fields = [
                 'id', 'mac', 'last_ip', 
-                'name', 
+                'local_name', 
                 'hostname', 'name', 'adopted', 'last_seen', 'status', 
                 'software_version', 'wifi_signal', 'state_on', 'architecture', 'led_count', 'has_static_ip',
                 'wifi_sleep', 'turn_on_after_power_up', 'usermod_url',
@@ -82,7 +82,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
                 device.id, 
                 device.mac, 
                 device.last_ip, 
-                device.name,
+                device.local_name,
                 device.hostname, 
                 device.name, 
                 device.adopted, 

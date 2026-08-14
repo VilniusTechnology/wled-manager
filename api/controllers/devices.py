@@ -211,7 +211,6 @@ def adopt_devices_route(request: List[AdoptDeviceRequest]):
         logger.warning(f"ValueError during adoption: {e}")
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.post("/devices/release", response_model=SuccessResponse, summary="Release devices")
 @router.post("/devices/healthcheck", summary="Perform health check on multiple devices")
 async def mass_device_healthcheck(request: MassHealthcheckRequest):
     logger.info(f"Performing mass healthcheck for {len(request.ips)} IPs")
@@ -228,6 +227,7 @@ async def mass_device_healthcheck(request: MassHealthcheckRequest):
     return {"success": True, "results": results}
 
 
+@router.post("/devices/release", response_model=SuccessResponse, summary="Release devices")
 def release_devices_route(request: ReleaseDeviceRequest):
     """Release multiple WLED devices by setting adopted to null."""
     logger.info(f"Releasing {len(request.device_ids)} devices")
@@ -329,7 +329,8 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                     local_name=device.local_name,
                     hostname=device.hostname,
                     adopted=device.adopted,
-                    usermod_url=device.usermod_url
+                    usermod_url=device.usermod_url,
+                    architecture=device.architecture
                 )
                 
                 # Denormalized fields
@@ -373,6 +374,16 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                     if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and short_info.turn_on_after_power_up is None:
                         short_info.turn_on_after_power_up = bool(cfg['def']['on'])
                         
+                    if 'arch' in info and not short_info.architecture:
+                        short_info.architecture = info['arch']
+                        
+                    hw_info = info.get('hw', {})
+                    if hw_info:
+                        if 'bnd' in hw_info and not short_info.brand:
+                            short_info.brand = hw_info['bnd']
+                        if 'pm' in hw_info and not short_info.product:
+                            short_info.product = hw_info['pm']
+                        
                     if latest_info.get('timestamp'):
                         try:
                             short_info.last_seen = datetime.fromisoformat(latest_info['timestamp'])
@@ -395,7 +406,8 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                     local_name=device.local_name,
                     hostname=device.hostname,
                     adopted=device.adopted,
-                    usermod_url=device.usermod_url
+                    usermod_url=device.usermod_url,
+                    architecture=device.architecture
                 )
                 # Denormalized fields only
                 if device.software_version:

@@ -106,6 +106,30 @@
           <option :value="false">Disabled</option>
         </select>
       </div>
+      <!-- Architecture Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Hardware:</label>
+        <select
+          v-model="filters.architecture"
+          class="block w-32 pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">All</option>
+          <option v-for="hw in availableHardware" :key="hw" :value="hw">{{ hw }}</option>
+        </select>
+      </div>
+
+      <!-- Software Version Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Firmware:</label>
+        <select
+          v-model="filters.softwareVersion"
+          class="block w-32 pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">All</option>
+          <option v-for="fw in availableFirmwares" :key="fw" :value="fw">{{ fw }}</option>
+        </select>
+      </div>
+
       <!-- Clear Filters Button -->
       <button
         @click="clearFilters"
@@ -118,8 +142,35 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
 import type { DeviceFilters } from '../../types/deviceFilters'
+import type { Device } from '../../types/device'
+
+const props = defineProps<{
+  devices?: Device[]
+}>()
+
+const availableHardware = computed(() => {
+  const hardware = new Set<string>()
+  for (const d of props.devices || []) {
+    const hw = d.product || d.brand || d.architecture || d.arch
+    if (hw) {
+      hardware.add(hw)
+    }
+  }
+  return Array.from(hardware).sort()
+})
+
+const availableFirmwares = computed(() => {
+  const firmwares = new Set<string>()
+  for (const d of props.devices || []) {
+    const fw = d.software_version || d.version
+    if (fw) {
+      firmwares.add(fw)
+    }
+  }
+  return Array.from(firmwares).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+})
 
 const savedFiltersStr = sessionStorage.getItem('deviceFilters')
 let initialFilters: Partial<DeviceFilters> = {}
@@ -139,7 +190,9 @@ const filters = reactive<DeviceFilters>({
   adopted: initialFilters.adopted !== undefined ? initialFilters.adopted : null,
   hasStaticIp: initialFilters.hasStaticIp !== undefined ? initialFilters.hasStaticIp : null,
   wifiSleep: initialFilters.wifiSleep !== undefined ? initialFilters.wifiSleep : null,
-  turnOnAfterPowerUp: initialFilters.turnOnAfterPowerUp !== undefined ? initialFilters.turnOnAfterPowerUp : null
+  turnOnAfterPowerUp: initialFilters.turnOnAfterPowerUp !== undefined ? initialFilters.turnOnAfterPowerUp : null,
+  architecture: initialFilters.architecture ?? '',
+  softwareVersion: initialFilters.softwareVersion ?? ''
 })
 
 const emit = defineEmits<{
@@ -155,6 +208,8 @@ const clearFilters = () => {
   filters.hasStaticIp = null
   filters.wifiSleep = null
   filters.turnOnAfterPowerUp = null
+  filters.architecture = ''
+  filters.softwareVersion = ''
   // The watch will automatically emit the changes
 }
 
