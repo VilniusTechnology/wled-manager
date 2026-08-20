@@ -17,9 +17,10 @@ from models.dto import (
 )
 from api.services.scan_service import process_device
 from api.services.device_service import (
-    check_device_health_status, delete_device, add_manual_device, build_device_full_details_dto,
+    delete_device, add_manual_device, build_device_full_details_dto,
     get_device_and_validate_ip, adopt_devices, release_devices
 )
+from api.services.wled_health_service import resolve_device_health_status
 
 
 router = APIRouter()
@@ -216,13 +217,14 @@ async def mass_device_healthcheck(request: MassHealthcheckRequest):
     logger.info(f"Performing mass healthcheck for {len(request.ips)} IPs")
     results = {}
     for ip in request.ips:
-        status, grade, rtt, err, mac = await check_device_health_status(ip)
+        is_online, response_time, status, grade, details, error_msg, mac = await resolve_device_health_status(ip)
         results[ip] = {
             "status": status,
             "grade": grade,
-            "response_time": rtt,
-            "error": err,
-            "mac": mac
+            "response_time": response_time,
+            "error": error_msg,
+            "mac": mac,
+            "health_details": details
         }
     return {"success": True, "results": results}
 
@@ -251,19 +253,27 @@ async def scan_refresh_devices(timeout: float = 10.0):
         
         refreshed = []
         
-        # Create and run tasks for devices with valid IPs
+        # Create tasks for devices with valid IPs
         valid_devices = [d for d in devices if d.last_ip]
-        for device in valid_devices:
+        
+        async def refresh_single_device(device):
             try:
                 logger.debug(f"+++ Will process refresh for device {device.name} mac:{device.mac} at ip:{device.last_ip}")
                 result = await process_device(device.last_ip, device.mac, timeout)
                 if result:
-                    # Handle dict return
                     mac_refreshed = result['mac'] if isinstance(result, dict) and 'mac' in result else result
-                    refreshed.append(mac_refreshed)
                     logger.debug(f"Successfully refreshed device {mac_refreshed} at {device.last_ip}")
+                    return mac_refreshed
             except Exception as e:
                 logger.warning(f"Failed to refresh device {device.mac} at {device.last_ip}: {e}")
+            return None
+
+        # Run all refresh tasks concurrently
+        tasks = [refresh_single_device(d) for d in valid_devices]
+        results = await asyncio.gather(*tasks)
+        
+        # Filter out None results
+        refreshed = [r for r in results if r]
         
         logger.info(f"Refresh scan completed. Updated {len(refreshed)} devices")
         return {"refreshed": refreshed}

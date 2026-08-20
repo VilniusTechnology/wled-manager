@@ -1,55 +1,63 @@
 <template>
-  <div class="flex flex-wrap gap-2 mt-2 sm:mt-1 justify-start sm:justify-end">
+  <div class="flex flex-wrap gap-2 mt-2 sm:mt-1 justify-start sm:justify-end items-center">
     <button
       @click="$emit('view-details', deviceId)"
       :disabled="props.isRestoring"
       class="device-action device-action-details"
+      title="Details"
     >
-      Details
+      <Info class="w-4 h-4" />
     </button>
     <button
       @click="openBackupDialog"
       :disabled="props.isRestoring"
       class="device-action device-action-backup"
+      title="Backup"
     >
-      Backup
+      <Download class="w-4 h-4" />
     </button>
     <button
       @click="openRestoreDialog"
       :disabled="props.isRestoring"
       class="device-action device-action-restore"
+      title="Restore"
     >
-      {{ props.isRestoring ? 'Loading...' : 'Restore' }}
+      <Loader2 v-if="props.isRestoring" class="w-4 h-4 animate-spin" />
+      <Upload v-else class="w-4 h-4" />
     </button>
     <button
       @click="$emit('visit-device', deviceId)"
       :disabled="props.isRestoring"
       class="device-action device-action-visit"
+      title="Visit"
     >
-      Visit
+      <ExternalLink class="w-4 h-4" />
     </button>
     <button
       @click="$emit('delete-device', deviceId)"
       :disabled="props.isRestoring"
       class="device-action device-action-delete"
+      title="Delete"
     >
-      Delete
+      <Trash2 class="w-4 h-4" />
     </button>
     <button
       v-if="!isAdopted"
       @click="openAdoptDialog"
       :disabled="props.isRestoring"
       class="device-action device-action-adopt"
+      title="Adopt"
     >
-      Adopt
+      <Plus class="w-4 h-4" />
     </button>
     <button
       v-else
       @click="$emit('release-device', deviceId)"
       :disabled="props.isRestoring"
       class="device-action device-action-release"
+      title="Release"
     >
-      Release
+      <Minus class="w-4 h-4" />
     </button>
   </div>
 
@@ -100,6 +108,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Info, Download, Upload, ExternalLink, Trash2, Plus, Minus, Loader2 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import BackupDialog from '../../components/shared/BackupDialog.vue'
 import Modal from '../../components/shared/Modal.vue'

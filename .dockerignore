@@ -46,8 +46,10 @@ Thumbs.db
 backups/
 database/
 
-# Node.js (for backend build)
+# Node.js
 node_modules/
+**/node_modules/
+ui/node_modules/
 npm-debug.log*
 
 # Git

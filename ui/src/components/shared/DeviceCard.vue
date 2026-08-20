@@ -46,57 +46,65 @@
         </div>
       </div>
 
-      <div class="mt-5 flex flex-wrap gap-2">
+      <div class="mt-5 flex flex-wrap gap-2 items-center">
         <button
           @click="$emit('viewDetails', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-details"
+          title="Details"
         >
-          Details
+          <Info class="w-4 h-4" />
         </button>
         <button
           @click="$emit('backupDevice', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-backup"
+          title="Backup"
         >
-          Backup
+          <Download class="w-4 h-4" />
         </button>
         <button
           @click="$emit('restoreDevice', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-restore"
+          title="Restore"
         >
-          {{ props.isRestoring ? 'Loading...' : 'Restore' }}
+          <Loader2 v-if="props.isRestoring" class="w-4 h-4 animate-spin" />
+          <Upload v-else class="w-4 h-4" />
         </button>
         <button
           @click="$emit('visitDevice', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-visit"
+          title="Visit"
         >
-          Visit
+          <ExternalLink class="w-4 h-4" />
         </button>
         <button
           @click="$emit('deleteDevice', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-delete"
+          title="Delete"
         >
-          Delete
+          <Trash2 class="w-4 h-4" />
         </button>
         <button
           v-if="!isAdopted"
           @click="handleAdopt"
           :disabled="props.isRestoring"
           class="device-action device-action-adopt"
+          title="Adopt"
         >
-          Adopt
+          <Plus class="w-4 h-4" />
         </button>
         <button
           v-else
           @click="$emit('releaseDevice', device.device_id || '')"
           :disabled="props.isRestoring"
           class="device-action device-action-release"
+          title="Release"
         >
-          Release
+          <Minus class="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -108,7 +116,7 @@ import type { Device } from '../../types/device'
 import { formatDateTime } from '../../utils/dateUtils'
 import { formatMacAddress } from '../../utils/deviceDisplay'
 import { computed } from 'vue'
-import { Sun } from 'lucide-vue-next'
+import { Sun, Info, Download, Upload, ExternalLink, Trash2, Plus, Minus, Loader2 } from 'lucide-vue-next'
 import StatusBubble from './StatusBubble.vue'
 import IpConfigBadge from './IpConfigBadge.vue'
 

@@ -25,6 +25,7 @@ export interface Device {
   uptime?: number
   led_count?: number
   wifi_sleep?: boolean // Whether device has wifi sleep enabled
+  wifi_signal?: number // WiFi signal strength percentage
   // Keep old fields for compatibility
   id?: string
   adopted?: boolean

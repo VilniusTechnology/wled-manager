@@ -326,102 +326,7 @@ def get_device_and_validate_ip(device_id: str):
     
     return device
 
-async def ping_device(ip: str, timeout: float = 5.0) -> tuple[bool, float]:
-    """Internal helper to ping a device using TCP port 80 and return (reachable, average_rtt_ms)."""
-    start_time = time.time()
-    try:
-        # TCP Port 80 Check (Primary & Only Check)
-        # Extremely fast (10-30ms for online devices), 100% reliable
-        # Avoids ICMP raw socket concurrency drops
-        actual_timeout = min(timeout, 5.0)
-        
-        # open_connection returns (reader, writer)
-        coro = asyncio.open_connection(ip, 80)
-        reader, writer = await asyncio.wait_for(coro, timeout=actual_timeout)
-        
-        response_time_ms = (time.time() - start_time) * 1000.0
-        
-        writer.close()
-        await writer.wait_closed()
-        
-        return True, response_time_ms
-    except Exception as e:
-        logger.debug(f"TCP health check failed for {ip}: {e}")
-        return False, float('inf')
 
-async def check_device_health_status(ip: str, timeout: float = 5.0) -> Tuple[str, int, float, Optional[str], Optional[str]]:
-    """
-    Check the health status of a WLED device.
-    
-    Args:
-        ip: Device IP address
-        timeout: Ping timeout in seconds
-        
-    Returns:
-        tuple[str, int, float, str | None, str | None]: Returns (status, grade, response_time, error_message, mac)
-    """
-    logger.debug(f"Checking health status for device at IP: {ip}")
-    
-    reachable, avg_rtt = await ping_device(ip, timeout)
-    
-
-    error_msg = None
-    mac = None
-    
-    # If device is not reachable via ping, try HTTP fallback
-    if not reachable:
-        try:
-            # Try to fetch info via HTTP as fallback
-            logger.debug(f"Ping failed for {ip}, attempting HTTP fallback...")
-            # Run blocking HTTP request in thread
-            info = await asyncio.to_thread(retrieve_wled_full_info, ip, timeout=timeout)
-            if info and not info.get('error'):
-                reachable = True
-                avg_rtt = 200.0  # Assume decent latency if HTTP works
-                status = "good"
-                grade = 4
-                logger.debug(f"HTTP fallback successful for {ip}")
-            else:
-                status = "offline"
-                grade = 1
-                avg_rtt = float('inf')
-                error_msg = "Device not reachable (Ping and HTTP failed)"
-        except Exception as e:
-            logger.debug(f"HTTP fallback failed for {ip}: {e}")
-            status = "offline"
-            grade = 1
-            avg_rtt = float('inf')
-            error_msg = f"Device not reachable: {e}"
-        
-    else:
-        # Device is reachable - grade based on average RTT
-        try:
-            device = get_wled_device_by_ip(ip)
-            if device:
-                mac = device.mac
-        except Exception as e:
-            error_msg = str(e)
-            
-        # Grade based on TCP response time
-        # Note: WiFi sleep can cause the first connection attempt to take 1000-2000ms!
-        if avg_rtt < 100:
-            status = "excellent"
-            grade = 5
-        elif avg_rtt < 500:
-            status = "good"
-            grade = 4
-        elif avg_rtt < 1000:
-            status = "slow"
-            grade = 3
-        elif avg_rtt < 3000:
-            status = "very_slow"
-            grade = 2
-        else:
-            status = "almost_offline"  # Very high latency treated as offline
-            grade = 1
-
-    logger.debug(f"Device health status result for {ip}: {status} (grade {grade}, rtt {avg_rtt}ms)")
-    return status, grade, avg_rtt, error_msg, mac
 
 async def upload_file_to_device(ip_address: str, file_path: str, filename: str):
     """Upload a file to a WLED device using settings/sec page approach."""
@@ -687,26 +592,19 @@ async def check_and_update_device_status(ip: str, mac: str = None, hostname: str
     logger = logging.getLogger(__name__)
     logger.debug(f"Checking health status for device at {ip} (MAC: {mac}, hostname: {hostname})")
     
-    async def try_http_check(check_ip: str, timeout: float = 3.0):
-        """Try HTTP check on given IP, return (response, error) tuple."""
-        try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(f"http://{check_ip}/json/info")
-                if response.status_code == 200:
-                    return response, None
-                return None, f"HTTP {response.status_code}"
-        except Exception as e:
-            return None, str(e)
-
+    from api.services.wled_health_service import resolve_device_health_status
+    
     current_ip = ip
     
-    # 1. Quick TCP Health Check first
-    check_result = await check_device_health_status(current_ip, timeout=5.0)
-    status = check_result[0]
+    # 1. Health Check first
+    is_online, response_time, status, grade, details, error_msg, discovered_mac = await resolve_device_health_status(current_ip, timeout=5.0, expected_mac=mac)
 
     # 2. If TCP ping fails and we have a MAC, attempt IP resolution
-    if status == "offline" and mac:
-        logger.info(f"Stored IP {ip} offline for MAC {mac}, attempting IP resolution...")
+    if not is_online and mac:
+        if error_msg and "IP reassigned" in error_msg:
+             logger.info(f"Stored IP {ip} reassigned, attempting IP resolution for MAC {mac}...")
+        else:
+             logger.info(f"Stored IP {ip} offline for MAC {mac}, attempting IP resolution...")
         try:
             from utils.ip_resolver import resolve_device_ip
             from services.settings_service import get_setting
@@ -732,53 +630,10 @@ async def check_and_update_device_status(ip: str, mac: str = None, hostname: str
                 await asyncio.to_thread(update_wled_device_partial, {'last_ip': resolved_ip}, mac)
                 
                 current_ip = resolved_ip
-                # Re-check TCP health on new IP
-                check_result = await check_device_health_status(current_ip, timeout=5.0)
-                status = check_result[0]
+                # Re-check health on new IP
+                is_online, response_time, status, grade, details, error_msg, discovered_mac = await resolve_device_health_status(current_ip, timeout=5.0, expected_mac=mac)
         except Exception as e:
             logger.warning(f"IP resolution failed for {mac}: {e}")
-
-    # 3. If online and MAC provided, verify via HTTP (Secondary check)
-    if status != "offline" and mac:
-        response, last_error = await try_http_check(current_ip, 3.0)
-        if response and response.status_code == 200:
-            info = response.json()
-            device_mac = info.get("mac", "")
-            
-            normalized_stored_mac = mac.lower().replace(':', '')
-            normalized_device_mac = device_mac.lower().replace(':', '')
-            
-            if normalized_stored_mac != normalized_device_mac:
-                logger.warning(
-                    f"MAC mismatch for IP {current_ip}: expected {mac} but found {device_mac}. "
-                    f"Device likely offline, IP reassigned to different WLED device."
-                )
-                from db.sqlite import update_wled_device_partial
-                await asyncio.to_thread(update_wled_device_partial, {
-                    "status": "offline",
-                    "last_seen": datetime.datetime.now(timezone.utc).isoformat(),
-                }, mac)
-                
-                return {
-                    "ip": current_ip,
-                    "status": "offline",
-                    "grade": 1,
-                    "response_time": None,
-                    "last_seen": datetime.datetime.now(timezone.utc).isoformat(),
-                    "error_message": f"IP reassigned: expected MAC {mac}, found {device_mac}",
-                    "mac": mac
-                }
-            else:
-                logger.debug(f"MAC verification passed for {current_ip}: {device_mac}")
-        else:
-            logger.debug(f"HTTP MAC check failed for {current_ip}: {last_error}, keeping online status based on TCP check")
-
-    # Unpack final check result
-    status = check_result[0]
-    grade = check_result[1]
-    response_time = check_result[2]
-    error_msg = check_result[3] if len(check_result) > 3 else None
-    discovered_mac = check_result[4] if len(check_result) > 4 else None
 
     target_mac = mac or discovered_mac
 
@@ -787,18 +642,28 @@ async def check_and_update_device_status(ip: str, mac: str = None, hostname: str
         "status": status,
         "grade": grade,
         "response_time": response_time,
-        "last_seen": datetime.datetime.utcnow().isoformat(),
+        "last_seen": datetime.datetime.now(timezone.utc).isoformat(),
         "error_message": error_msg,
-        "mac": target_mac
+        "mac": target_mac,
+        "health_details": details
     }
     
     if target_mac:
         from db.sqlite import update_wled_device_partial
         logger.info(f"Updating status for {target_mac} (IP: {current_ip}): status={result['status']}, grade={result['grade']}")
-        await asyncio.to_thread(update_wled_device_partial, {
+        
+        updates = {
             "status": result["status"],
             "last_seen": result["last_seen"],
-        }, target_mac)
+        }
+        
+        # Store wifi signal if available
+        if "signal_dbm" in details:
+            updates["wifi_signal"] = details["signal_dbm"]
+        elif "signal_pct" in details:
+            updates["wifi_signal"] = details["signal_pct"]
+            
+        await asyncio.to_thread(update_wled_device_partial, updates, target_mac)
     else:
         logger.warning(f"Could not update status in DB for {current_ip} because MAC is unknown")
     

@@ -107,19 +107,18 @@ class HealthCheckScheduler(BaseScheduler):
                 if isinstance(result, Exception):
                     failed_checks.append(result)
                     failed_devices.append(ips[i])
-                elif hasattr(result, 'status') and result.status == 'dead':
-                    failed_checks.append(f"Device dead: {result.status}")
-                    failed_devices.append(ips[i])
-                else:
-                    successful_checks.append(result)
-                    # Add detailed logging for online status decision
-                    if hasattr(result, 'status') and result.status == 'online':
-                         logger.debug(f"Device {ips[i]} confirmed ONLINE via HTTP check")
-                    elif hasattr(result, 'status') and result.status == 'good':
-                         logger.debug(f"Device {ips[i]} confirmed GOOD via HTTP check")
+                elif isinstance(result, dict):
+                    status = result.get('status')
+                    grade = result.get('grade', 1)
+                    
+                    if status in ['offline', 'dead', 'poor']:
+                        failed_checks.append(f"Device offline/poor: {status}")
+                        failed_devices.append(ips[i])
                     else:
-                         # Likely a dict result
-                         logger.debug(f"Device {ips[i]} check result: {result}")
+                        successful_checks.append(result)
+                        logger.debug(f"Device {ips[i]} check result: {status} (grade {grade})")
+                else:
+                     logger.debug(f"Device {ips[i]} unknown result type: {result}")
             
             # Calculate duration
             duration = (datetime.now(timezone.utc) - start_time).total_seconds()

@@ -34,6 +34,9 @@
         </div>
       </div>
     </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <StatusBadge :status="device.status || ''" />
+    </td>
     <td class="px-6 py-4 whitespace-nowrap text-sm">
       <div class="flex flex-col gap-1">
         <a
@@ -50,8 +53,21 @@
     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono">
       <span>{{ formatMacAddress(device.mac || '') }}</span>
     </td>
-    <td class="px-6 py-4 whitespace-nowrap">
-      <StatusBadge :status="device.status" />
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      <div v-if="device.status !== 'offline' && device.signal_strength !== undefined && device.signal_strength !== null" class="flex items-center">
+        <span class="text-xs font-medium mr-1.5">{{ getSignalPercentage(device.signal_strength) }}%</span>
+        <div class="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            class="h-full rounded-full"
+            :class="[
+              getSignalPercentage(device.signal_strength) > 70 ? 'bg-green-500' : 
+              getSignalPercentage(device.signal_strength) > 40 ? 'bg-yellow-500' : 'bg-red-500'
+            ]"
+            :style="{ width: `${getSignalPercentage(device.signal_strength)}%` }"
+          ></div>
+        </div>
+      </div>
+      <span v-else class="text-gray-400">-</span>
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
       <DeviceListActions
@@ -90,6 +106,17 @@ const props = defineProps<Props>()
 const deviceName = computed(() => getDeviceDisplayName(props.device))
 const detailsHref = computed(() => getDeviceDetailsPath(props.device))
 const deviceIp = computed(() => getDeviceDisplayIp(props.device))
+
+const getSignalPercentage = (signal?: number | null) => {
+  if (signal === undefined || signal === null) return 0
+  if (signal > 0 && signal <= 100) return signal // already a percentage
+  if (signal <= 0) {
+    if (signal >= -50) return 100
+    if (signal <= -100) return 0
+    return 2 * (signal + 100)
+  }
+  return 0
+}
 
 defineEmits<{
   viewDetails: [deviceId: string]

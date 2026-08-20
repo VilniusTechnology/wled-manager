@@ -14,12 +14,10 @@ const props = defineProps<Props>()
 const bubbleClass = computed(() => {
   const status = props.status?.toLowerCase() || 'unknown'
 
-  if (['offline', 'dead', 'almost_offline'].includes(status)) {
+  if (['offline', 'dead', 'unknown'].includes(status)) {
     return 'bg-red-500'
-  } else if (['online', 'excellent', 'good', 'slow', 'very_slow'].includes(status)) {
-    return 'bg-green-500'
   } else {
-    return 'bg-gray-400'
+    return 'bg-green-500'
   }
 })
 </script>

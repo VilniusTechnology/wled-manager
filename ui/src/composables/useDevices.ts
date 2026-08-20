@@ -347,7 +347,7 @@ export function useDevices() {
         // Remove from local state immediately for better UX
         deviceStore.removeDevice(deviceId)
         // Also refresh to ensure sync with server
-        await fetchDevices(true)
+        await fetchDevices(false)
       } else {
         throw new Error(result.message || 'Failed to delete device')
       }
@@ -379,7 +379,7 @@ export function useDevices() {
       const result = await response.json()
       if (result.success) {
         console.log(`Device added successfully: ${result.device_id}`)
-        await fetchDevices(true)
+        await fetchDevices(false)
         return result
       } else {
         throw new Error(result.message || 'Failed to add device')
