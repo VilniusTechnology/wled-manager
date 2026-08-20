@@ -29,6 +29,7 @@ const tabs = [
   { name: 'Schedulers', route: '/schedulers', icon: 'schedulers' },
   { name: 'Secrets', route: '/secrets', icon: 'secrets' },
   { name: 'App Config', route: '/app-config', icon: 'app-config' },
+  { name: 'Serial Installer', route: '/serial-installer', icon: 'serial' },
   { name: 'About', route: '/about', icon: 'about' }
 ]
 

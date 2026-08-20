@@ -11,7 +11,8 @@ import {
   Calendar, 
   Lock, 
   Settings, 
-  Info
+  Info,
+  Usb
 } from 'lucide-vue-next'
 
 interface Props extends MenuProps {}
@@ -33,6 +34,7 @@ const iconMap: Record<string, any> = {
   schedulers: Calendar,
   secrets: Lock,
   'app-config': Settings,
+  serial: Usb,
   about: Info
 }
 

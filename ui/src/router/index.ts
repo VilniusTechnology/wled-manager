@@ -62,6 +62,11 @@ const routes = [
     path: '/schedulers',
     name: 'Schedulers',
     component: () => import('../pages/SchedulerPage.vue')
+  },
+  {
+    path: '/serial-installer',
+    name: 'Serial Installer',
+    component: () => import('../pages/SerialInstallerPage.vue')
   }
 ]
 
