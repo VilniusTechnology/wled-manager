@@ -91,6 +91,39 @@
         </div>
       </section>
 
+      <!-- Backup Settings -->
+      <section>
+        <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 border-b pb-2">Backup Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Backup Interval -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Backup Interval (hours)</label>
+            <input 
+              v-model.number="settings.backup_interval_hours" 
+              type="number" 
+              step="1"
+              min="1"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">How often automated backups run</p>
+          </div>
+
+          <!-- Backup Retention Days -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Backup Retention (days)</label>
+            <input 
+              v-model.number="settings.backup_retention_days" 
+              type="number" 
+              step="1"
+              min="1"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Number of days to keep daily backups (older backups are thinned to 1 per week)</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Time Settings -->
       <section>
         <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 border-b pb-2">Time Settings</h2>

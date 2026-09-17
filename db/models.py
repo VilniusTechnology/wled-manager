@@ -51,6 +51,7 @@ class WLEDDevice(BaseModel):
     has_static_ip: Optional[bool] = None
     wifi_sleep: Optional[bool] = None
     turn_on_after_power_up: Optional[bool] = None
+    mqtt_enabled: Optional[bool] = None
     usermod_url: Optional[str] = None
 
     class Config:

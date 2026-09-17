@@ -183,12 +183,14 @@ class BackupScheduler:
         return success_count, failed_count
     
     async def _cleanup_old_backups(self):
-        """Clean up backups exceeding the retention count."""
+        """Clean up backups using time-machine sparse retention strategy."""
         devices = get_all_wled_devices()
         total_cleaned = 0
         
-        # Refresh retention count from settings
-        self.retention_count = get_setting("backup_retention_count") or 10
+        # Refresh retention settings
+        self.retention_days = get_setting("backup_retention_days") or 30
+        
+        now = datetime.utcnow()
         
         for device in devices:
             try:
@@ -197,16 +199,61 @@ class BackupScheduler:
                     
                 # Get all backups for this device
                 device_backups = get_backups_for_device(device.mac)
-                if not device_backups or len(device_backups) <= self.retention_count:
-                    logger.debug(f"Skipping cleanup for {device.name} - has {len(device_backups)} backups (limit {self.retention_count})")
+                if not device_backups:
                     continue
                 
                 # Sort backups by timestamp (newest first)
                 device_backups.sort(key=lambda b: b.timestamp, reverse=True)
                 
-                # Keep the newest 'retention_count' backups
-                backups_to_keep = device_backups[:self.retention_count]
-                backups_to_delete = device_backups[self.retention_count:]
+                backups_to_delete = []
+                
+                # Tracking for daily/weekly thinning
+                seen_days = set()
+                seen_weeks = set()
+                
+                for backup in device_backups:
+                    try:
+                        # Parse timestamp
+                        if isinstance(backup.timestamp, str):
+                            try:
+                                b_time = datetime.fromisoformat(backup.timestamp.replace('Z', '+00:00'))
+                            except ValueError:
+                                b_time = datetime.strptime(backup.timestamp.split('.')[0], "%Y-%m-%d %H:%M:%S")
+                        else:
+                            b_time = backup.timestamp
+                            
+                        # Make b_time naive if it is aware
+                        if b_time.tzinfo:
+                            b_time = b_time.replace(tzinfo=None)
+                            
+                        age = now - b_time
+                        
+                        if age < timedelta(hours=24):
+                            # Keep all < 24 hours
+                            continue
+                            
+                        if age <= timedelta(days=self.retention_days):
+                            # 1 to N days: keep one per day
+                            day_key = b_time.strftime("%Y-%m-%d")
+                            if day_key not in seen_days:
+                                seen_days.add(day_key)
+                                continue
+                            else:
+                                backups_to_delete.append(backup)
+                        else:
+                            # > N days: keep one per week
+                            year, week, _ = b_time.isocalendar()
+                            week_key = f"{year}-W{week}"
+                            if week_key not in seen_weeks:
+                                seen_weeks.add(week_key)
+                                continue
+                            else:
+                                backups_to_delete.append(backup)
+                                
+                    except Exception as e:
+                        logger.error(f"Error parsing timestamp for backup {backup.id}: {e}")
+                        # Keep backup if we can't parse timestamp to be safe
+                        continue
                 
                 if not backups_to_delete:
                     continue
@@ -227,7 +274,8 @@ class BackupScheduler:
                 
                 cleaned_count = len(backups_to_delete)
                 total_cleaned += cleaned_count
-                logger.info(f"Cleaned up {cleaned_count} old backups for {device.name}")
+                if cleaned_count > 0:
+                    logger.info(f"Cleaned up {cleaned_count} old backups for {device.name}")
                 
             except Exception as e:
                 logger.error(f"Error cleaning up backups for device {device.name}: {str(e)}")

@@ -106,6 +106,18 @@
           <option :value="false">Disabled</option>
         </select>
       </div>
+      <!-- MQTT Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">MQTT:</label>
+        <select
+          v-model="filters.mqttEnabled"
+          class="block w-32 pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option :value="null">All</option>
+          <option :value="true">Enabled</option>
+          <option :value="false">Disabled</option>
+        </select>
+      </div>
       <!-- Architecture Filter -->
       <div class="flex items-center gap-2">
         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Hardware:</label>
@@ -191,6 +203,7 @@ const filters = reactive<DeviceFilters>({
   hasStaticIp: initialFilters.hasStaticIp !== undefined ? initialFilters.hasStaticIp : null,
   wifiSleep: initialFilters.wifiSleep !== undefined ? initialFilters.wifiSleep : null,
   turnOnAfterPowerUp: initialFilters.turnOnAfterPowerUp !== undefined ? initialFilters.turnOnAfterPowerUp : null,
+  mqttEnabled: initialFilters.mqttEnabled !== undefined ? initialFilters.mqttEnabled : null,
   architecture: initialFilters.architecture ?? '',
   softwareVersion: initialFilters.softwareVersion ?? ''
 })
@@ -208,6 +221,7 @@ const clearFilters = () => {
   filters.hasStaticIp = null
   filters.wifiSleep = null
   filters.turnOnAfterPowerUp = null
+  filters.mqttEnabled = null
   filters.architecture = ''
   filters.softwareVersion = ''
   // The watch will automatically emit the changes

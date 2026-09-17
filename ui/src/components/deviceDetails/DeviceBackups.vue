@@ -163,6 +163,30 @@ const openRestoreDialog = (backup: Backup) => {
   showRestoreDialog.value = true
 }
 
+const downloadBackupFile = async (type: 'config' | 'presets', backup: Backup) => {
+  try {
+    const response = type === 'config' 
+      ? await backupService.downloadBackupConfig(backup.id) 
+      : await backupService.downloadBackupPresets(backup.id)
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    
+    const dateStr = backup.timestamp.replace(/[: ]/g, '-').replace('T', '_')
+    a.download = `wled_${type}_${dateStr}.json`
+    
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (error) {
+    console.error(`Failed to download ${type}:`, error)
+    showNotification('Download Failed', `Failed to download ${type}: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+  }
+}
+
 onMounted(() => {
   fetchBackups()
 })
@@ -268,12 +292,28 @@ onMounted(() => {
             <!-- Actions -->
             <div class="flex items-center space-x-2">
               <button
+                @click="downloadBackupFile('config', backup)"
+                class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors flex items-center"
+                title="Download Configuration"
+              >
+                <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Config
+              </button>
+              <button
+                @click="downloadBackupFile('presets', backup)"
+                class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors flex items-center"
+                title="Download Presets"
+              >
+                <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Presets
+              </button>
+              <button
                 @click="openRestoreDialog(backup)"
                 :disabled="isBackupOperationsDisabled"
-                class="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-xs font-medium rounded transition-colors"
+                class="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-xs font-medium rounded transition-colors flex items-center"
               >
                 Restore
-                <span v-if="isBackupOperationsDisabled" class="text-xs opacity-75">(Offline)</span>
+                <span v-if="isBackupOperationsDisabled" class="ml-1 text-xs opacity-75">(Offline)</span>
               </button>
             </div>
           </div>

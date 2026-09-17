@@ -52,6 +52,9 @@ def insert_or_update_wled_device(device: WLEDDevice):
             if device.turn_on_after_power_up is not None:
                 update_fields.append('turn_on_after_power_up = ?')
                 values.append(device.turn_on_after_power_up)
+            if device.mqtt_enabled is not None:
+                update_fields.append('mqtt_enabled = ?')
+                values.append(device.mqtt_enabled)
             if device.usermod_url is not None:
                 update_fields.append('usermod_url = ?')
                 values.append(device.usermod_url)
@@ -76,7 +79,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
                 'local_name', 
                 'hostname', 'name', 'adopted', 'last_seen', 'status', 
                 'software_version', 'wifi_signal', 'state_on', 'architecture', 'led_count', 'has_static_ip',
-                'wifi_sleep', 'turn_on_after_power_up', 'usermod_url',
+                'wifi_sleep', 'turn_on_after_power_up', 'mqtt_enabled', 'usermod_url',
                 'created', 'updated']
             values = [
                 device.id, 
@@ -96,6 +99,7 @@ def insert_or_update_wled_device(device: WLEDDevice):
                 device.has_static_ip,
                 device.wifi_sleep,
                 device.turn_on_after_power_up,
+                device.mqtt_enabled,
                 device.usermod_url,
                 datetime.datetime.utcnow(),  # created
                 datetime.datetime.utcnow()   # updated
@@ -160,6 +164,9 @@ def update_wled_device_partial(updates: Dict[str, Any], mac: str):
         if 'turn_on_after_power_up' in updates:
             update_fields.append('turn_on_after_power_up = ?')
             values.append(updates['turn_on_after_power_up'])
+        if 'mqtt_enabled' in updates:
+            update_fields.append('mqtt_enabled = ?')
+            values.append(updates['mqtt_enabled'])
         if 'usermod_url' in updates:
             update_fields.append('usermod_url = ?')
             values.append(updates['usermod_url'])
@@ -206,6 +213,9 @@ def get_wled_device(mac: str) -> Optional[WLEDDevice]:
                 
             if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
                 data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
+
+            if 'mqtt_enabled' in data and isinstance(data['mqtt_enabled'], int):
+                data['mqtt_enabled'] = bool(data['mqtt_enabled'])
             
             return WLEDDevice(**data)
         return None
@@ -234,6 +244,12 @@ def get_wled_device_by_ip(ip: str) -> Optional[WLEDDevice]:
 
             if 'wifi_sleep' in data and isinstance(data['wifi_sleep'], int):
                 data['wifi_sleep'] = bool(data['wifi_sleep'])
+
+            if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
+                data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
+
+            if 'mqtt_enabled' in data and isinstance(data['mqtt_enabled'], int):
+                data['mqtt_enabled'] = bool(data['mqtt_enabled'])
             
             return WLEDDevice(**data)
         return None
@@ -262,6 +278,12 @@ def get_wled_device_by_id(device_id: str) -> Optional[WLEDDevice]:
 
             if 'wifi_sleep' in data and isinstance(data['wifi_sleep'], int):
                 data['wifi_sleep'] = bool(data['wifi_sleep'])
+
+            if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
+                data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
+
+            if 'mqtt_enabled' in data and isinstance(data['mqtt_enabled'], int):
+                data['mqtt_enabled'] = bool(data['mqtt_enabled'])
             
             return WLEDDevice(**data)
         return None
@@ -295,6 +317,9 @@ def get_all_wled_devices() -> List[WLEDDevice]:
                     
                 if 'turn_on_after_power_up' in data and isinstance(data['turn_on_after_power_up'], int):
                     data['turn_on_after_power_up'] = bool(data['turn_on_after_power_up'])
+
+                if 'mqtt_enabled' in data and isinstance(data['mqtt_enabled'], int):
+                    data['mqtt_enabled'] = bool(data['mqtt_enabled'])
                 
                 devices.append(WLEDDevice(**data))
             return devices

@@ -11,6 +11,8 @@ export interface AppSettings {
   connection_pool_size: number
   max_retries: number
   scheduler_initial_delay: number
+  backup_interval_hours: number
+  backup_retention_days: number
   [key: string]: any
 }
 

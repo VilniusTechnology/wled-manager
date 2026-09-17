@@ -111,6 +111,7 @@ WLED_DB_FIELD_MAPPING = {
     "led_count": ("info_full", ("leds", "count"), int),
     "wifi_sleep": ("cfg_full", ("wifi", "sleep"), bool),
     "turn_on_after_power_up": ("cfg_full", ("def", "on"), bool),
+    "mqtt_enabled": ("cfg_full", ("if", "mqtt", "en"), bool),
 }
 
 def extract_device_details(info: Dict[str, Any]) -> Dict[str, Any]:
@@ -142,6 +143,15 @@ def extract_device_details(info: Dict[str, Any]) -> Dict[str, Any]:
         details['has_static_ip'] = detect_static_ip_config(info.get("cfg_full", {}))
     except Exception:
         pass
+
+    # Fallback for mqtt_enabled if not found in cfg_full.if.mqtt.en
+    if 'mqtt_enabled' not in details or details['mqtt_enabled'] is None:
+        cfg = info.get("cfg_full", {})
+        if isinstance(cfg, dict):
+            if "mqtt" in cfg and isinstance(cfg["mqtt"], dict) and "en" in cfg["mqtt"]:
+                details['mqtt_enabled'] = bool(cfg["mqtt"]["en"])
+        if ('mqtt_enabled' not in details or details['mqtt_enabled'] is None) and "mqtt" in info and isinstance(info["mqtt"], dict) and "en" in info["mqtt"]:
+            details['mqtt_enabled'] = bool(info["mqtt"]["en"])
         
     return details
 

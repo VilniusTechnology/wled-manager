@@ -15,6 +15,7 @@ def _get_default_settings():
         "network_scan_interval_hours": 168, # 7 days
         "device_refresh_interval_hours": 1,
         "backup_interval_hours": 24,
+        "backup_retention_days": 30,
         "backup_retention_count": 10,
         "max_workers": 32,
         "connection_pool_size": 20,

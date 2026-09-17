@@ -130,6 +130,8 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         // Extract LED info from config
         const led_info = config.hw?.led || {}
         const network_info = info.wifi || {}
+        const mqtt_info = config.if?.mqtt || config.mqtt || raw.mqtt || {}
+        const mqtt_enabled = mqtt_info.en !== undefined ? Boolean(mqtt_info.en) : (raw.mqtt_enabled !== undefined ? Boolean(raw.mqtt_enabled) : undefined)
 
         // Map all expected fields
         const device: Device = {
@@ -149,6 +151,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
           software_version: info.version,
           has_backups: false,
           has_static_ip: raw.has_static_ip,
+          mqtt_enabled,
           discovery_date_time: raw.discovery_date_time,
           // Hardware info
           arch: info.arch,

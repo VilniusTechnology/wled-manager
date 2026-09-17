@@ -358,6 +358,8 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                     short_info.wifi_sleep = device.wifi_sleep
                 if device.turn_on_after_power_up is not None:
                     short_info.turn_on_after_power_up = device.turn_on_after_power_up
+                if device.mqtt_enabled is not None:
+                    short_info.mqtt_enabled = device.mqtt_enabled
                     
                 # Latest info fields
                 if latest_info:
@@ -383,6 +385,13 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                         short_info.wifi_sleep = bool(cfg['wifi']['sleep'])
                     if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and short_info.turn_on_after_power_up is None:
                         short_info.turn_on_after_power_up = bool(cfg['def']['on'])
+                    if cfg and short_info.mqtt_enabled is None:
+                        if 'if' in cfg and isinstance(cfg['if'], dict) and 'mqtt' in cfg['if']:
+                            mqtt_cfg = cfg['if'].get('mqtt', {})
+                            if isinstance(mqtt_cfg, dict) and 'en' in mqtt_cfg:
+                                short_info.mqtt_enabled = bool(mqtt_cfg['en'])
+                        elif 'mqtt' in cfg and isinstance(cfg['mqtt'], dict) and 'en' in cfg['mqtt']:
+                            short_info.mqtt_enabled = bool(cfg['mqtt']['en'])
                         
                     if 'arch' in info and not short_info.architecture:
                         short_info.architecture = info['arch']
@@ -434,6 +443,8 @@ def get_device_short_info(include_latest: bool = Query(False, description="Inclu
                     short_info.wifi_sleep = device.wifi_sleep
                 if device.turn_on_after_power_up is not None:
                     short_info.turn_on_after_power_up = device.turn_on_after_power_up
+                if device.mqtt_enabled is not None:
+                    short_info.mqtt_enabled = device.mqtt_enabled
             
             short_info_list.append(short_info)
             

@@ -242,8 +242,8 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+      <!-- Error State (when no device data at all) -->
+      <div v-else-if="error && !device" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
         <div class="flex items-center">
           <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -266,6 +266,25 @@ onMounted(async () => {
 
       <!-- Main Content -->
       <div v-else-if="device">
+        <!-- Error Banner (when device data exists but refresh failed) -->
+        <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center">
+            <svg class="h-6 w-6 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Device is currently offline or unreachable</h3>
+              <p class="mt-1 text-sm text-red-700 dark:text-red-300">You are viewing cached data. Some actions may not be available.</p>
+            </div>
+          </div>
+          <button
+            @click="fetchDeviceDetails"
+            class="whitespace-nowrap px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+
         <!-- Tabs Navigation -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div class="border-b border-gray-200 dark:border-gray-700">

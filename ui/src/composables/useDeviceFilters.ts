@@ -21,11 +21,25 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
       filters.value.hasStaticIp !== null ||
       filters.value.wifiSleep !== null ||
       filters.value.turnOnAfterPowerUp !== null ||
+      filters.value.mqttEnabled !== null ||
       filters.value.architecture !== '' ||
       filters.value.softwareVersion !== ''
 
     if (!hasActiveFilters) {
       return devices.value
+    }
+
+    // Helper to extract mqtt_enabled if not directly defined on device
+    const getDeviceMqttEnabled = (device: Device): boolean => {
+      if (device.mqtt_enabled !== undefined && device.mqtt_enabled !== null) {
+        return toBool(device.mqtt_enabled)
+      }
+      const anyDevice = device as any
+      const cfgMqtt = anyDevice.latest_config?.if?.mqtt?.en ?? anyDevice.latest_config?.mqtt?.en ?? anyDevice.cfg_full?.if?.mqtt?.en ?? anyDevice.mqtt?.en
+      if (cfgMqtt !== undefined && cfgMqtt !== null) {
+        return toBool(cfgMqtt)
+      }
+      return false
     }
 
     // Apply filters
@@ -101,6 +115,13 @@ export const useDeviceFilters = (devices: Ref<Device[]>, filters: Ref<DeviceFilt
       // Turn on after power up Filter
       if (filters.value.turnOnAfterPowerUp !== null) {
         if (toBool(device.turn_on_after_power_up) !== filters.value.turnOnAfterPowerUp) {
+          return false
+        }
+      }
+
+      // MQTT Enabled Filter
+      if (filters.value.mqttEnabled !== null) {
+        if (getDeviceMqttEnabled(device) !== filters.value.mqttEnabled) {
           return false
         }
       }

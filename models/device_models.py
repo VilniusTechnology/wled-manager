@@ -40,6 +40,7 @@ class WLEDDeviceBaseDTO(BaseModel):
     status: Optional[str] = None
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
     turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
+    mqtt_enabled: Optional[bool] = None  # Whether device has MQTT enabled
     usermod_url: Optional[str] = None
 
 class WLEDDeviceCreateDTO(WLEDDeviceBaseDTO):
@@ -52,6 +53,7 @@ class WLEDDeviceUpdateDTO(BaseModel):
     name: Optional[str] = None
     adopted: Optional[bool] = None
     status: Optional[str] = None
+    mqtt_enabled: Optional[bool] = None
     usermod_url: Optional[str] = None
 
 class WLEDDeviceDTO(WLEDDeviceBaseDTO):
@@ -70,6 +72,7 @@ class WLEDDeviceFullInfoDTO(BaseModel):
     has_static_ip: Optional[bool] = None  # Whether device has static IP configuration
     discovery_date_time: Optional[datetime] = None  # Created timestamp from wled_devices table
     device_id: Optional[str] = None  # Internal DB ID
+    mqtt_enabled: Optional[bool] = None
 
 
 # Device Short Info DTO
@@ -87,6 +90,7 @@ class DeviceShortInfoDTO(BaseModel):
     has_static_ip: Optional[bool] = None  # Whether device has static IP configuration
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
     turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
+    mqtt_enabled: Optional[bool] = None  # Whether device has MQTT enabled
     usermod_url: Optional[str] = None
     architecture: Optional[str] = None
     brand: Optional[str] = None
@@ -141,6 +145,7 @@ class DeviceFullDetailsDTO(BaseModel):
     has_static_ip: Optional[bool] = None  # Whether device has static IP configuration
     wifi_sleep: Optional[bool] = None  # Whether device has wifi sleep enabled
     turn_on_after_power_up: Optional[bool] = None  # Whether device turns on LEDs after power up
+    mqtt_enabled: Optional[bool] = None  # Whether device has MQTT enabled
     usermod_url: Optional[str] = None
     
     class Config:

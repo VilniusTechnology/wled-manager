@@ -332,7 +332,7 @@ const closeBackupDialog = () => {
   selectedBackupDevice.value = null
 }
 
-const performBackup = async (device: Device, options: { config: boolean; presets: boolean }) => {
+const performBackup = async (device: Device, _options: { config: boolean; presets: boolean }) => {
   // Currently backend API only supports full backup (both config and presets), 
   // or via specific separate endpoints if implemented.
   // The existing single device backup endpoint POST /devices/{id}/backup does a full backup.

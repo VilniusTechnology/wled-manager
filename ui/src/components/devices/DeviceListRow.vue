@@ -47,7 +47,10 @@
           class="text-blue-600 dark:text-blue-400 hover:underline"
         >{{ deviceIp }}</a>
         <span v-else>{{ deviceIp }}</span>
-        <IpConfigBadge :hasStaticIp="device.has_static_ip" size="sm" />
+        <div class="flex items-center gap-1">
+          <IpConfigBadge :hasStaticIp="device.has_static_ip" size="sm" />
+          <MqttBadge :mqttEnabled="device.mqtt_enabled" size="sm" />
+        </div>
       </div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono">
@@ -93,6 +96,7 @@ import { getDeviceDetailsPath, getDeviceDisplayIp, getDeviceDisplayName, formatM
 import StatusBubble from '../shared/StatusBubble.vue'
 import StatusBadge from '../shared/StatusBadge.vue'
 import IpConfigBadge from '../shared/IpConfigBadge.vue'
+import MqttBadge from '../shared/MqttBadge.vue'
 import DeviceListActions from './DeviceListActions.vue'
 
 interface Props {

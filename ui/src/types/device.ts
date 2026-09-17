@@ -15,6 +15,7 @@ export interface Device {
   has_backups: boolean
   has_static_ip?: boolean  // Whether device has static IP configuration
   turn_on_after_power_up?: boolean
+  mqtt_enabled?: boolean // Whether device has MQTT enabled
   discovery_date_time?: string  // Created timestamp from wled_devices table
   // WLED specific fields
   architecture?: string
@@ -43,6 +44,7 @@ export interface DeviceDetails extends Device {
   adopted: boolean
   has_static_ip?: boolean
   turn_on_after_power_up?: boolean
+  mqtt_enabled?: boolean
   latest_info?: any
   latest_state?: any
   latest_config?: any

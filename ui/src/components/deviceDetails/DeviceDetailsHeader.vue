@@ -19,6 +19,7 @@
               <div class="flex items-center gap-2 mt-1">
                 <StatusBadge :status="deviceStatus" />
                 <IpConfigBadge :hasStaticIp="device?.has_static_ip" size="md" />
+                <MqttBadge :mqttEnabled="device?.mqtt_enabled" size="md" />
                 <span class="break-all font-mono text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">{{ formatMacAddress(device?.mac) }}</span>
               </div>
             </div>
@@ -96,6 +97,7 @@ import { getDeviceDisplayName, formatMacAddress } from '../../utils/deviceDispla
 import { formatDateTime } from '../../utils/dateUtils'
 import IpConfigBadge from '../shared/IpConfigBadge.vue'
 import StatusBadge from '../shared/StatusBadge.vue'
+import MqttBadge from '../shared/MqttBadge.vue'
 import DeviceJumpTo from './DeviceJumpTo.vue'
 import DeviceNetworkActions from './DeviceNetworkActions.vue'
 

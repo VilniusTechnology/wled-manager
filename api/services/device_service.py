@@ -154,6 +154,8 @@ def build_device_full_details_dto(device, latest_info=None) -> DeviceFullDetails
         details.wifi_sleep = device.wifi_sleep
     if device.turn_on_after_power_up is not None:
         details.turn_on_after_power_up = device.turn_on_after_power_up
+    if device.mqtt_enabled is not None:
+        details.mqtt_enabled = device.mqtt_enabled
 
     # If we have latest info, extract and overwrite/set the detailed fields
     if latest_info:
@@ -222,6 +224,13 @@ def build_device_full_details_dto(device, latest_info=None) -> DeviceFullDetails
             details.wifi_sleep = bool(cfg['wifi']['sleep'])
         if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and details.turn_on_after_power_up is None:
             details.turn_on_after_power_up = bool(cfg['def']['on'])
+        if cfg and details.mqtt_enabled is None:
+            if 'if' in cfg and isinstance(cfg['if'], dict) and 'mqtt' in cfg['if']:
+                mqtt_cfg = cfg['if'].get('mqtt', {})
+                if isinstance(mqtt_cfg, dict) and 'en' in mqtt_cfg:
+                    details.mqtt_enabled = bool(mqtt_cfg['en'])
+            elif 'mqtt' in cfg and isinstance(cfg['mqtt'], dict) and 'en' in cfg['mqtt']:
+                details.mqtt_enabled = bool(cfg['mqtt']['en'])
     
     return details
 
@@ -266,6 +275,8 @@ def build_device_short_info_dto(device, latest_info=None) -> DeviceShortInfoDTO:
         short_info.wifi_sleep = device.wifi_sleep
     if device.turn_on_after_power_up is not None:
         short_info.turn_on_after_power_up = device.turn_on_after_power_up
+    if device.mqtt_enabled is not None:
+        short_info.mqtt_enabled = device.mqtt_enabled
 
     # If we have latest info, extract and set additional fields (as fallback or supplement)
     if latest_info:
@@ -300,6 +311,13 @@ def build_device_short_info_dto(device, latest_info=None) -> DeviceShortInfoDTO:
             short_info.wifi_sleep = bool(cfg['wifi']['sleep'])
         if 'def' in cfg and isinstance(cfg['def'], dict) and 'on' in cfg['def'] and short_info.turn_on_after_power_up is None:
             short_info.turn_on_after_power_up = bool(cfg['def']['on'])
+        if cfg and short_info.mqtt_enabled is None:
+            if 'if' in cfg and isinstance(cfg['if'], dict) and 'mqtt' in cfg['if']:
+                mqtt_cfg = cfg['if'].get('mqtt', {})
+                if isinstance(mqtt_cfg, dict) and 'en' in mqtt_cfg:
+                    short_info.mqtt_enabled = bool(mqtt_cfg['en'])
+            elif 'mqtt' in cfg and isinstance(cfg['mqtt'], dict) and 'en' in cfg['mqtt']:
+                short_info.mqtt_enabled = bool(cfg['mqtt']['en'])
         
         # Set last seen from latest timestamp
         if latest_info.get('timestamp'):

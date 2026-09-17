@@ -53,11 +53,15 @@ const viewMode = ref('list')
 const currentFilters = ref<DeviceFilters>({
   status: '',
   search: '',
-  hasBackups: false,
-  stateOn: false,
+  hasBackups: null,
+  stateOn: null,
   adopted: null,
   hasStaticIp: null,
-  wifiSleep: null, turnOnAfterPowerUp: null
+  wifiSleep: null,
+  turnOnAfterPowerUp: null,
+  mqttEnabled: null,
+  architecture: '',
+  softwareVersion: ''
 })
 
 // Device selection state
@@ -317,7 +321,7 @@ const handleFiltersChanged = (filters: DeviceFilters) => {
 }
 
 // Get the functions from composables
-const { backupDevice: performBackup, scanInProgress, restoreDevice: performRestore, adoptDevices, releaseDevices } = useDevices()
+const { backupDevice: performBackup, scanInProgress, adoptDevices, releaseDevices } = useDevices()
 const { backups, fetchBackups } = useBackups()
 
 const closeBackupDialog = () => {
@@ -778,7 +782,7 @@ watch(displayDevices, updateSelectAllState, { immediate: true })
       :message="`Are you sure you want to delete ${deviceToDelete?.name}? This action cannot be undone.`"
       confirm-text="Delete"
       type="danger"
-      @cancel="showDeleteConfirmModal = false"
+      @close="showDeleteConfirmModal = false"
       @confirm="confirmDeleteDevice"
     />
   </div>

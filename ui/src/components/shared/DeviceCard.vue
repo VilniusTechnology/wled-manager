@@ -11,7 +11,7 @@
         <h3 class="font-semibold text-lg">{{ device.name || 'Unknown Device' }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ device.ip_address || device.last_ip }}</p>
       </div>
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1 items-end">
         <Sun 
           :class="[
             'w-6 h-6 transition-colors duration-200',
@@ -20,7 +20,10 @@
               : 'text-gray-400 dark:text-gray-600'
           ]" 
         />
-        <IpConfigBadge :hasStaticIp="device.has_static_ip" size="sm" />
+        <div class="flex items-center gap-1">
+          <IpConfigBadge :hasStaticIp="device.has_static_ip" size="sm" />
+          <MqttBadge :mqttEnabled="device.mqtt_enabled" size="sm" />
+        </div>
       </div>
     </div>
     <div class="p-5">
@@ -119,6 +122,7 @@ import { computed } from 'vue'
 import { Sun, Info, Download, Upload, ExternalLink, Trash2, Plus, Minus, Loader2 } from 'lucide-vue-next'
 import StatusBubble from './StatusBubble.vue'
 import IpConfigBadge from './IpConfigBadge.vue'
+import MqttBadge from './MqttBadge.vue'
 
 interface Props {
   device: Device

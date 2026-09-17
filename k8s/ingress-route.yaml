@@ -7,26 +7,62 @@ spec:
   entryPoints:
     - web
   routes:
-    # WebSocket routes - these must come first for proper matching
-    - match: Host(`example.com`) && PathPrefix(`/ws`)
+    # WebSocket routes - must come first
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/ws`)
       kind: Rule
       services:
         - name: wled-manager-backend
           port: 8000
     # API routes
-    - match: Host(`example.com`) && PathPrefix(`/api`)
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/api`)
       kind: Rule
       services:
         - name: wled-manager-backend
           port: 8000
     # Backend health endpoint
-    - match: Host(`example.com`) && PathPrefix(`/health`)
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/health`)
       kind: Rule
       services:
         - name: wled-manager-backend
           port: 8000
-    # UI routes - must be last as catch-all
-    - match: Host(`example.com`)
+    # UI routes - catch-all
+    - match: Host(`wled-manager.home`) || Host(`serveris.local`)
+      kind: Rule
+      services:
+        - name: wled-manager-frontend
+          port: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: wled-manager-secure
+  namespace: wled
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    secretName: wled-manager-tls
+  routes:
+    # WebSocket routes - must come first
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/ws`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # API routes
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # Backend health endpoint
+    - match: (Host(`wled-manager.home`) || Host(`serveris.local`)) && PathPrefix(`/health`)
+      kind: Rule
+      services:
+        - name: wled-manager-backend
+          port: 8000
+    # UI routes - catch-all
+    - match: Host(`wled-manager.home`) || Host(`serveris.local`)
       kind: Rule
       services:
         - name: wled-manager-frontend

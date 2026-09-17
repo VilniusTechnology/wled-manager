@@ -433,7 +433,7 @@ watch(() => props.modelValue.hw.led.ins, (newIns) => {
                    <input type="number" :value="getMacro(btn, 2)" @input="e => setMacro(btn, Number((e.target as HTMLInputElement).value), 2)" class="w-full text-sm px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                  </div>
                </div>
-              <button @click="removeButton(idx)" class="text-red-500 hover:text-red-700 mt-4 md:mt-0">
+              <button @click="removeButton(Number(idx))" class="text-red-500 hover:text-red-700 mt-4 md:mt-0">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
            </div>
