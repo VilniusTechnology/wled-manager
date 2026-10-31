@@ -10,11 +10,24 @@ import asyncio
 
 from db import init_db
 
-# Configure logging
+# Configure logging with environment-based level
+_log_level_map = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+}
+_log_level = _log_level_map.get(os.getenv("LOG_LEVEL", "info").lower(), logging.INFO)
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=_log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+# Suppress overly noisy HTTP client library logs
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="WLED Manager API")

@@ -278,7 +278,11 @@ async def process_device(ip: str, existingMac: Optional[str] = None, timeout=10.
             return None
 
         if "error" in deviceInfo:
-            logger.error(f"Error in device response from {ip}/json/info: {deviceInfo['error']}. {deviceInfo}")
+            is_offline = deviceInfo.get("offline", False)
+            if is_offline:
+                logger.info(f"Device at {ip} is offline/unreachable: {deviceInfo['error']}")
+            else:
+                logger.error(f"Error in device response from {ip}/json/info: {deviceInfo['error']}")
             
             # Auto-healing: Try to resolve IP if we have the MAC and connection failed
             target_mac = existingMac or deviceInfo.get("mac")
@@ -328,7 +332,7 @@ async def process_device(ip: str, existingMac: Optional[str] = None, timeout=10.
                         logger.warning(f"Could not resolve new IP for MAC {target_mac}")
 
                 except Exception as resolve_err:
-                    logger.error(f"Error during IP resolution for {target_mac}: {resolve_err}")
+                    logger.warning(f"Error during IP resolution for {target_mac}: {resolve_err}")
 
             # If still failed (or resolution didn't help), mark offline
             if "error" in deviceInfo:

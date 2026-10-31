@@ -11,6 +11,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+class DeviceUnreachableError(Exception):
+    """Raised when a WLED device is offline or unreachable over the network."""
+    pass
+
 class WLEDRetriever:
     def __init__(self, ip, timeout=10.0):
         self.ip = ip
@@ -47,6 +51,8 @@ class WLEDRetriever:
             elif r.status_code == 503:
                  # Should have been retried by adapter, but if we still get 503 here, raise error
                  raise Exception(f"Service Unavailable (503) after retries")
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            raise DeviceUnreachableError(f"Device unreachable at {self.ip}{endpoint}: {e}") from e
         except Exception as e:
             raise Exception(f"Failed to retrieve {endpoint} from {self.ip}: {str(e)}")
         finally:

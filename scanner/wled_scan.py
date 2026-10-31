@@ -13,7 +13,7 @@ import logging
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import required classes for full info flow
-from .wled_retriever import WLEDRetriever
+from .wled_retriever import WLEDRetriever, DeviceUnreachableError
 from .dto.wled_dto import WLEDDeviceFullInfoDTO
 from .wled_json_builder import WLEDJsonBuilder
 from services.settings_service import get_setting
@@ -107,8 +107,10 @@ def retrieve_wled_full_info(ip, timeout=None):
             result["discovery_date_time"] = None
             
         return result
+    except DeviceUnreachableError as e:
+        return {"ip": ip, "error": str(e), "offline": True}
     except Exception as e:
-        return {"ip": ip, "error": str(e)}
+        return {"ip": ip, "error": str(e), "offline": False}
 
 def get_local_ip():
     """Get the local IP address of the interface that would be used for internet connectivity."""

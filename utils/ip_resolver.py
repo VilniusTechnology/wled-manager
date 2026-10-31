@@ -69,27 +69,67 @@ def get_ip_from_arp_cache(mac: str) -> Optional[str]:
     return None
 
 
-def find_device_by_mac_scan(mac: str, network_cidr: str, timeout: float = 2.0) -> Optional[str]:
+import time
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# Cache for tracking when a MAC address scan last failed: {normalized_mac: timestamp}
+_failed_scan_cache = {}
+# Minimum interval between full network scans for the same unreachable MAC (12 hours)
+SCAN_COOLDOWN_SECONDS = 43200
+
+# Scan-specific requests session with NO retries (fail-fast on empty IPs)
+_scan_session = None
+
+def _get_scan_session():
+    global _scan_session
+    if _scan_session is None:
+        session = requests.Session()
+        adapter = HTTPAdapter(
+            pool_connections=50,
+            pool_maxsize=50,
+            max_retries=Retry(total=0)
+        )
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        _scan_session = session
+    return _scan_session
+
+
+def find_device_by_mac_scan(mac: str, network_cidr: str, timeout: float = 1.0) -> Optional[str]:
     """
     Scan network and find device by MAC address.
-    Uses the existing WLED scan infrastructure.
+    Uses a fast fail-fast session without HTTP retries to prevent connection timeouts flooding logs.
+    Includes a 12-hour cooldown per MAC to avoid continuous network sweeps for offline devices.
     """
     if not mac or not network_cidr:
         return None
     
     normalized_mac = normalize_mac(mac)
     
+    # Check cooldown: if this MAC was scanned recently and not found, skip scanning
+    now = time.time()
+    last_failed = _failed_scan_cache.get(normalized_mac)
+    if last_failed and (now - last_failed) < SCAN_COOLDOWN_SECONDS:
+        remaining_min = int((SCAN_COOLDOWN_SECONDS - (now - last_failed)) / 60)
+        logger.debug(f"Skipping network scan for MAC {mac}: cooldown active for another {remaining_min}m")
+        return None
+    
     try:
-        # Import here to avoid circular imports
-        from scanner.wled_scan import get_session
-        
         ips = [str(ip) for ip in ipaddress.IPv4Network(network_cidr, strict=False)]
-        logger.debug(f"Scanning {len(ips)} IPs to find MAC {mac}")
+        logger.info(f"Scanning {len(ips)} IPs in {network_cidr} to locate MAC {mac}...")
+        
+        session = _get_scan_session()
+        
+        # Temporarily suppress urllib3 connection warnings during network sweep
+        urllib_logger = logging.getLogger("urllib3.connectionpool")
+        prev_level = urllib_logger.level
+        urllib_logger.setLevel(logging.ERROR)
         
         def check_ip_for_mac(ip: str) -> Optional[str]:
             """Check if device at IP has the target MAC."""
             try:
-                session = get_session()
                 r = session.get(f"http://{ip}/json/info", timeout=timeout)
                 if r.status_code == 200:
                     data = r.json()
@@ -100,17 +140,25 @@ def find_device_by_mac_scan(mac: str, network_cidr: str, timeout: float = 2.0) -
                 pass
             return None
         
-        # Parallel scan with max 50 workers
-        with ThreadPoolExecutor(max_workers=50) as executor:
-            futures = {executor.submit(check_ip_for_mac, ip): ip for ip in ips}
-            for future in as_completed(futures):
-                result = future.result()
-                if result:
-                    logger.info(f"Found device MAC {mac} at {result} via network scan")
-                    # Cancel remaining futures
-                    for f in futures:
-                        f.cancel()
-                    return result
+        try:
+            # Parallel scan with max 50 workers
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                futures = {executor.submit(check_ip_for_mac, ip): ip for ip in ips}
+                for future in as_completed(futures):
+                    result = future.result()
+                    if result:
+                        logger.info(f"Found device MAC {mac} at {result} via network scan")
+                        # Clear failure cache on success
+                        _failed_scan_cache.pop(normalized_mac, None)
+                        for f in futures:
+                            f.cancel()
+                        return result
+        finally:
+            urllib_logger.setLevel(prev_level)
+                    
+        # Device was not found in the entire subnet: record cooldown
+        _failed_scan_cache[normalized_mac] = now
+        logger.info(f"Network scan complete: MAC {mac} not found in {network_cidr}. Cooldown active for {SCAN_COOLDOWN_SECONDS // 3600}h.")
                     
     except Exception as e:
         logger.error(f"Network scan for MAC failed: {e}")

@@ -90,7 +90,12 @@ class HealthCheckScheduler(BaseScheduler):
             
             if not devices_to_check:
                 logger.debug("No device IPs to check")
-                self.status.update_success("No devices to check", device_success=0, device_total=0)
+                self.status.update_success(
+                    "No devices to check",
+                    device_success=0,
+                    device_total=0,
+                    log_level=logging.DEBUG,
+                )
                 return True
             
             logger.debug(f"Health checking {len(devices_to_check)} devices")
@@ -124,7 +129,7 @@ class HealthCheckScheduler(BaseScheduler):
             duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             
             # Update status with device-level metrics
-            message = f"Checked {len(ips)} devices: {len(successful_checks)} ok, {len(failed_checks)} failed in {duration:.2f}s"
+            message = f"Checked {len(ips)} devices: {len(successful_checks)} online, {len(failed_checks)} offline in {duration:.2f}s"
 
             if failed_checks:
                 # Get device names for failed IPs
@@ -134,11 +139,15 @@ class HealthCheckScheduler(BaseScheduler):
                     device_name = device.name if device and device.name else f"Device at {ip}"
                     failed_device_info.append(f"{device_name} ({ip})")
 
-                logger.warning(f"Failed devices ({len(failed_checks)} out of {len(devices)}): {', '.join(failed_device_info)}")
+                logger.info(f"Unreachable devices ({len(failed_checks)} out of {len(devices)}): {', '.join(failed_device_info)}")
 
-            # Pass device-level metrics to status
-            self.status.update_success(message, device_success=len(successful_checks), device_total=len(ips))
-            logger.debug(f"Health check completed: {message}")
+            # Pass device-level metrics to status (log at DEBUG to avoid 30-60s INFO spam)
+            self.status.update_success(
+                message,
+                device_success=len(successful_checks),
+                device_total=len(ips),
+                log_level=logging.DEBUG,
+            )
             
             return True
             

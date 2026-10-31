@@ -635,11 +635,14 @@ async def check_and_update_device_status(ip: str, mac: str = None, hostname: str
                 network = ipaddress.IPv4Network(local_ip + '/24', strict=False)
                 network_cidr = str(network)
             
+            # During routine health checks, only attempt lightweight ARP/mDNS resolution.
+            # Do NOT perform active 254-IP subnet sweeps on routine 60-second health checks!
             resolved_ip = await asyncio.to_thread(
                 resolve_device_ip, 
                 mac, 
                 hostname, 
-                network_cidr
+                network_cidr,
+                skip_scan=True
             )
             
             if resolved_ip and resolved_ip != ip:

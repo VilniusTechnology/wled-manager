@@ -38,13 +38,20 @@ class SchedulerStatus:
         """Update the scheduler interval."""
         self.interval_days = interval_days
     
-    def update_success(self, message: str = "", device_success: Optional[int] = None, device_total: Optional[int] = None):
+    def update_success(
+        self,
+        message: str = "",
+        device_success: Optional[int] = None,
+        device_total: Optional[int] = None,
+        log_level: int = logging.INFO,
+    ):
         """Update status after successful run.
 
         Args:
             message: Optional message describing the run
             device_success: Optional count of successfully checked devices
-            device_total: Optional total count of devices checked
+            device_total: Optional count of devices checked
+            log_level: Logging level for the completion message (default: INFO)
         """
         now = datetime.now(timezone.utc)
         self.last_run = now
@@ -63,7 +70,7 @@ class SchedulerStatus:
             self.device_success_count = device_success
             self.device_total_count = device_total
 
-        logger.info(f"Scheduler {self.name} completed successfully: {message}")
+        logger.log(log_level, f"Scheduler {self.name} completed successfully: {message}")
     
     
     def update_warning(self, warning_message: str, device_success: Optional[int] = None, device_total: Optional[int] = None):
