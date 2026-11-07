@@ -67,6 +67,10 @@ docker-compose*.yml
 README.md
 DEPLOYMENT.md
 
+# Desktop app (built separately, not part of the web deployment)
+src-tauri/
+ui/dist/
+
 # Temporary files
 *.tmp
 *.bak
