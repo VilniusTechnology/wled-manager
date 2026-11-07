@@ -19,10 +19,14 @@ services:
     # ports:
     #   - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     network_mode: host
+    # Use named volumes for data instead of bind-mounting host directories.
+    # The repo lives on an NFS automount (nas.home) and OrbStack cannot reliably
+    # bind-mount NFS subdirectories into containers (readdir returns ENOENT),
+    # which crash-loops the backend. Named volumes live in Docker's local
+    # storage and are immune to this.
     volumes:
-      - ${DATA_PATH:-./backups}:/app/backups
-      - ${DATA_PATH:-./database}:/app/database
-      - ${DATA_PATH:-./db}:/app/db
+      - wled-backups:/app/backups
+      - wled-database:/app/database
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
@@ -84,9 +88,7 @@ networks:
     driver: bridge
 
 volumes:
-  backups:
+  wled-backups:
     driver: local
-  database:
-    driver: local
-  db:
+  wled-database:
     driver: local

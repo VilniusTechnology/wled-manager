@@ -35,6 +35,17 @@ The project is configured with Docker Compose for a seamless development experie
 make dev
 ```
 
+> **⚠️ NFS workspace caveat (macOS + OrbStack)**
+> The dev stack (`docker-compose.dev.yml`) bind-mounts source directories for hot reload. If the repo is checked out on an NFS/autofs mount (e.g. `nas.home:/HA-REMOTE/Aurora`), OrbStack's Docker engine cannot reliably bind-mount those NFS subdirectories into containers — `readdir()` returns `ENOENT` and the backend crash-loops with `FileNotFoundError: '/app/services'` (or `/app/db`).
+>
+> For a working **local** instance on an NFS-shared workspace, use the production stack instead — it bakes source into the images and uses Docker named volumes for data, so it has no NFS bind-mount dependency:
+>
+> ```bash
+> docker compose up -d --build
+> # API: http://localhost:8000  ·  UI: http://localhost:8080
+> ```
+> See `docs/04_Archives/Incidents/2026-11-07_WLED_Manager_Local_Backend_NFS_Bind_Mount_Failure.md` for the full root-cause analysis.
+
 - **Frontend**: http://localhost:5173 (Hot-reloads on change)
 - **Backend API**: http://localhost:8000 (Hot-reloads on change)
 - **API Docs**: http://localhost:8000/docs
