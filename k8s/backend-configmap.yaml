@@ -11,8 +11,8 @@ data:
   BACKEND_HOST: 0.0.0.0
   BACKEND_PORT: "8000"
   # Scheduler controls
-  DISABLE_BACKUP_SCHEDULER: "false"
-  DISABLE_DEVICE_REFRESH_SCHEDULER: "false"
+  DISABLE_BACKUP: "false"
+  DISABLE_DEVICE_REFRESH: "false"
   # Network scanning
   NETWORK_RANGE: 192.168.1.0/24
   SCAN_TIMEOUT: "1.0"
@@ -20,8 +20,6 @@ data:
   REQUEST_DELAY: "0.5"
   SCAN_DELAY: "0.1"
   # Backup configuration
-  BACKUP_RETENTION_DAYS: "180"
-  BACKUP_INTERVAL: "86400"
   BACKUP_MAX_WORKERS: "5"
   # Device refresh configuration
   DEVICE_REFRESH_INTERVAL: "604800"
