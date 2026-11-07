@@ -21,7 +21,19 @@ Restoration can be initiated from:
 
 ## Automatic Backups
 
-Backups can be automated using [Schedulers](#/docs/user/schedulers). Configure the backup interval and retention count in the scheduler settings.
+Backups can be automated using [Schedulers](#/docs/user/schedulers). Configure the backup interval in the scheduler settings.
+
+### Retention policy
+
+Retained backups follow a Grandfather-Father-Son (time-machine) policy:
+
+- Newer than 7 days: keep every backup.
+- 7–30 days: keep one backup per day.
+- 30–90 days: keep one backup per week.
+- 90 days–1 year: keep one backup per month.
+- Older than 1 year: keep one backup per year.
+
+This guarantees a recent copy plus a backup from roughly one week, one month, three months, six months, and one year ago, and never deletes the only backup a device has.
 
 > [!NOTE]
 > After initial setup, you must run the backup scheduler manually once. See [Schedulers](#/docs/user/schedulers) for details.

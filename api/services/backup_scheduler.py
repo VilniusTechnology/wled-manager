@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 from typing import List, Dict, Any, Optional
 
@@ -10,6 +10,7 @@ from db.backup_models import WLEDBackupDBModel
 from db.models import WLEDDevice
 from scanner.wled_backup_retriever import WLEDBackupRetriever
 from api.services.scheduler_status import SchedulerStatus
+from api.services.backup_retention import parse_wled_timestamp, select_backups_for_deletion
 from services.settings_service import get_setting
 
 logger = logging.getLogger(__name__)
@@ -183,103 +184,52 @@ class BackupScheduler:
         return success_count, failed_count
     
     async def _cleanup_old_backups(self):
-        """Clean up backups using time-machine sparse retention strategy."""
+        """Clean up backups using the GFS (grandfather-father-son) retention policy."""
         devices = get_all_wled_devices()
         total_cleaned = 0
-        
-        # Refresh retention settings
-        self.retention_days = get_setting("backup_retention_days") or 30
-        
         now = datetime.utcnow()
-        
+
         for device in devices:
             try:
                 if not device.mac:
                     continue
-                    
+
                 # Get all backups for this device
                 device_backups = get_backups_for_device(device.mac)
                 if not device_backups:
                     continue
-                
-                # Sort backups by timestamp (newest first)
-                device_backups.sort(key=lambda b: b.timestamp, reverse=True)
-                
-                backups_to_delete = []
-                
-                # Tracking for daily/weekly thinning
-                seen_days = set()
-                seen_weeks = set()
-                
-                for backup in device_backups:
-                    try:
-                        # Parse timestamp
-                        if isinstance(backup.timestamp, str):
-                            try:
-                                b_time = datetime.fromisoformat(backup.timestamp.replace('Z', '+00:00'))
-                            except ValueError:
-                                b_time = datetime.strptime(backup.timestamp.split('.')[0], "%Y-%m-%d %H:%M:%S")
-                        else:
-                            b_time = backup.timestamp
-                            
-                        # Make b_time naive if it is aware
-                        if b_time.tzinfo:
-                            b_time = b_time.replace(tzinfo=None)
-                            
-                        age = now - b_time
-                        
-                        if age < timedelta(hours=24):
-                            # Keep all < 24 hours
-                            continue
-                            
-                        if age <= timedelta(days=self.retention_days):
-                            # 1 to N days: keep one per day
-                            day_key = b_time.strftime("%Y-%m-%d")
-                            if day_key not in seen_days:
-                                seen_days.add(day_key)
-                                continue
-                            else:
-                                backups_to_delete.append(backup)
-                        else:
-                            # > N days: keep one per week
-                            year, week, _ = b_time.isocalendar()
-                            week_key = f"{year}-W{week}"
-                            if week_key not in seen_weeks:
-                                seen_weeks.add(week_key)
-                                continue
-                            else:
-                                backups_to_delete.append(backup)
-                                
-                    except Exception as e:
-                        logger.error(f"Error parsing timestamp for backup {backup.id}: {e}")
-                        # Keep backup if we can't parse timestamp to be safe
-                        continue
-                
+
+                backups_to_delete = select_backups_for_deletion(
+                    device_backups,
+                    timestamp=lambda b: parse_wled_timestamp(b.timestamp),
+                    now=now,
+                )
+
                 if not backups_to_delete:
                     continue
-                
+
                 # Delete old backups
                 for backup in backups_to_delete:
                     try:
                         # Delete physical files
                         self._delete_backup_files(backup)
-                        
+
                         # Delete database record
                         from db.sqlite import delete_backup
                         delete_backup(backup.id)
-                        
+
                         logger.info(f"Deleted excess backup {backup.id} for {device.name} from {backup.timestamp}")
                     except Exception as e:
                         logger.error(f"Failed to delete backup {backup.id}: {str(e)}")
-                
+
                 cleaned_count = len(backups_to_delete)
                 total_cleaned += cleaned_count
                 if cleaned_count > 0:
                     logger.info(f"Cleaned up {cleaned_count} old backups for {device.name}")
-                
+
             except Exception as e:
                 logger.error(f"Error cleaning up backups for device {device.name}: {str(e)}")
-        
+
         return total_cleaned
     
     def _delete_backup_files(self, backup: WLEDBackupDBModel):
