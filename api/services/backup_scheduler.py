@@ -1,9 +1,10 @@
 import os
 import logging
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 from typing import List, Dict, Any, Optional
+from zoneinfo import ZoneInfo
 
 from db.sqlite import get_all_wled_devices, get_backups_for_device
 from db.backup_models import WLEDBackupDBModel
@@ -15,22 +16,66 @@ from services.settings_service import get_setting
 
 logger = logging.getLogger(__name__)
 
+# Weekly wall-clock slot for the scheduled backup, in the configured app timezone.
+# weekday follows datetime.weekday(): Monday=0 ... Sunday=6.
+SCHEDULE_WEEKDAY = 1  # Tuesday
+SCHEDULE_HOUR = 1
+SCHEDULE_MINUTE = 30
+DEFAULT_TIMEZONE = "Europe/Vilnius"
+WEEK_SECONDS = 7 * 24 * 60 * 60
+
 class BackupScheduler:
     """
     Scheduler for weekly backups and cleanup of old backups.
     Runs once a week and cleans up backups older than 6 months
     if at least one newer backup exists for the device.
+
+    The run is anchored to a wall-clock slot (Tuesday 01:30 in the configured
+    timezone) instead of a fixed offset from process start, so pod restarts no
+    longer shift the schedule or trigger an unsolicited backup + email.
     """
 
     def __init__(self):
         self.is_running = False
         self.thread = None
         self.backup_retriever = WLEDBackupRetriever()
-        # Run every 24 hours (default, overridden by settings)
-        self.interval_hours = get_setting("backup_interval_hours") or 24
+        # Kept for status display / fallback only; the loop uses the weekly slot
+        self.interval_hours = get_setting("backup_interval_hours") or 168
         # Retention count: 10 (default, overridden by settings)
         self.retention_count = get_setting("backup_retention_count") or 10
-        self.status = SchedulerStatus(self.interval_hours / 24.0, "Backup Scheduler")
+        self.status = SchedulerStatus(7.0, "Backup Scheduler")
+
+    def _timezone(self) -> ZoneInfo:
+        """Timezone used to evaluate the weekly slot."""
+        tz_name = get_setting("timezone") or DEFAULT_TIMEZONE
+        try:
+            return ZoneInfo(tz_name)
+        except Exception:
+            logger.warning(f"Invalid timezone '{tz_name}', falling back to {DEFAULT_TIMEZONE}")
+            return ZoneInfo(DEFAULT_TIMEZONE)
+
+    def next_run_at(self, now: Optional[datetime] = None) -> datetime:
+        """Return the next weekly run time (timezone aware)."""
+        tz = self._timezone()
+        now = now or datetime.now(tz)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=tz)
+        candidate = now.replace(
+            hour=SCHEDULE_HOUR, minute=SCHEDULE_MINUTE, second=0, microsecond=0
+        )
+        candidate += timedelta(days=(SCHEDULE_WEEKDAY - now.weekday()) % 7)
+        if candidate <= now:
+            candidate += timedelta(days=7)
+        return candidate
+
+    async def _wait_until(self, target: datetime):
+        """Sleep until target, waking up regularly so stop() stays responsive."""
+        tz = self._timezone()
+        while self.is_running:
+            remaining = (target - datetime.now(tz)).total_seconds()
+            if remaining <= 0:
+                return
+            await asyncio.sleep(min(remaining, 60))
     
     async def start(self):
         """Start the backup scheduler in a separate thread."""
@@ -47,7 +92,8 @@ class BackupScheduler:
         self.thread.daemon = True
         self.thread.start()
         
-        logger.info(f"Backup scheduler started (runs every {self.interval_hours} hours)")
+        next_run = self.next_run_at()
+        logger.info(f"Backup scheduler started (weekly slot: {next_run.isoformat()})")
     
     def _run_scheduler_thread(self):
         """Run the scheduler loop in a thread."""
@@ -63,25 +109,33 @@ class BackupScheduler:
     
     async def _scheduler_loop(self):
         """
-        Main scheduler loop. Runs the backup process based on configured interval.
-        The first backup runs immediately after startup.
+        Main scheduler loop. Waits for the weekly wall-clock slot, runs the
+        backup, then waits for the next slot. Nothing runs on startup.
         """
         while self.is_running:
             try:
-
-                # Update interval from settings in case it changed
-                self.interval_hours = get_setting("backup_interval_hours") or 24
+                # Refresh settings in case they changed
                 self.retention_count = get_setting("backup_retention_count") or 10
-                
-                # Update status (convert hours to days for status display)
-                self.status.update_interval(self.interval_hours / 24.0)
+                self.status.update_interval(7.0)
+
+                next_run = self.next_run_at()
+                self.status.next_run = next_run
+                logger.info(f"Next scheduled backup: {next_run.isoformat()}")
+
+                await self._wait_until(next_run)
+                if not self.is_running:
+                    break
 
                 logger.info("Running scheduled backup")
                 await self.run_backup_and_cleanup()
 
-                # Wait for the next scheduled run
-                logger.info(f"Next scheduled backup in {self.interval_hours} hours")
-                await asyncio.sleep(self.interval_hours * 60 * 60)
+                # Re-anchor on the wall clock (update_success uses now + interval)
+                next_run = self.next_run_at()
+                self.status.next_run = next_run
+                logger.info(f"Next scheduled backup: {next_run.isoformat()}")
+
+                # Avoid a second run inside the same slot
+                await asyncio.sleep(60)
             except Exception as e:
                 logger.error(f"Error in scheduler loop: {e}", exc_info=True)
                 # If there's an error, wait a bit and retry

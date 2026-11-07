@@ -45,6 +45,22 @@ Use cases:
 - **☸️ Kubernetes Ready** - Includes manifests for standard K8s or K3s deployment
 - **🐳 Docker Ready** - Production-ready Docker Compose with configurable `.env` support
 
+## Backup Schedule
+
+Scheduled backups are anchored to a **weekly wall-clock slot: Tuesday 01:30** in the
+application timezone (`timezone` setting, default `Europe/Vilnius`), defined in
+`api/services/backup_scheduler.py` (`SCHEDULE_WEEKDAY` / `SCHEDULE_HOUR` /
+`SCHEDULE_MINUTE`).
+
+- Nothing runs on startup, so restarting or redeploying the pod no longer shifts the
+  schedule and never triggers an unsolicited backup email.
+- Each run sends one report email ("WLED Devices Backup Access") while
+  `backup_email_enabled` is on, followed by the GFS retention cleanup.
+- `backup_interval_hours` is informational only (168 = weekly); the scheduler always
+  uses the slot above.
+- The Tasmota manager uses the same mechanism at Tuesday 03:45, so the two fleets are
+  never backed up at the same time.
+
 ## Installation
 
 ### Using Docker (Recommended)

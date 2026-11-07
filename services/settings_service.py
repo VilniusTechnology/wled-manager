@@ -14,7 +14,7 @@ def _get_default_settings():
         "health_check_interval_seconds": 60,
         "network_scan_interval_hours": 168, # 7 days
         "device_refresh_interval_hours": 1,
-        "backup_interval_hours": 24,
+        "backup_interval_hours": 168, # weekly (status display only: the scheduler uses the Tuesday 01:30 slot)
         "backup_retention_days": 30,
         "backup_retention_count": 10,
         "max_workers": 32,
